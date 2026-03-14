@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/ai/decision?mac=ESP-TEST-01",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
