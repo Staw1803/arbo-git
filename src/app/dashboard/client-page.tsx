@@ -10,8 +10,10 @@ import { TemperatureChart } from './components/TemperatureChart'
 import { HumidityChart } from './components/HumidityChart'
 import { AIEnginePanel } from './components/AIEnginePanel'
 import { ACWizard } from './components/ACWizard'
+import { DiscoveryBanner } from './components/DiscoveryBanner'
 import { useDashboard } from './context'
 import { motion, AnimatePresence } from 'framer-motion'
+
 
 interface TelemetryData {
   id: string;
@@ -70,6 +72,7 @@ export default function DashboardClient({ initialData }: { initialData: Telemetr
 
   return (
     <div className="space-y-6">
+       <DiscoveryBanner />
        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h2 className="text-3xl font-bold tracking-tight">
             {activeTab === 'overview' && 'Visão Geral'}

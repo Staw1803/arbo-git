@@ -22,6 +22,23 @@ export async function GET(request: Request) {
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
   try {
+    // ── 0. Ensure device is registered in 'dispositivos' table ────────────────
+    const { data: existingDevice } = await supabase
+      .from('dispositivos')
+      .select('mac_address')
+      .eq('mac_address', mac_address)
+      .maybeSingle()
+
+    if (!existingDevice) {
+      await supabase.from('dispositivos').insert({
+        mac_address,
+        nome: 'Novo Vaso (A.R.B.O.)',
+        sala: 'Não Definido',
+        status: 'PENDING',
+        ac_configured: false
+      })
+    }
+
     // ── 1. Fetch last 20 sensor readings for this ESP ──────────────────────────
     const { data: readings, error: sensorsError } = await supabase
       .from('telemetria')
