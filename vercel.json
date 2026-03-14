@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/ai/decision?mac=ESP-TEST-01",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}
