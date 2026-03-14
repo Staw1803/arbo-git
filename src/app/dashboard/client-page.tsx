@@ -11,6 +11,7 @@ import { HumidityChart } from './components/HumidityChart'
 import { AIEnginePanel } from './components/AIEnginePanel'
 import { ACWizard } from './components/ACWizard'
 import { DiscoveryBanner } from './components/DiscoveryBanner'
+import { DevicesList } from './components/DevicesList'
 import { useDashboard } from './context'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -80,6 +81,7 @@ export default function DashboardClient({ initialData }: { initialData: Telemetr
             {activeTab === 'humidity' && 'Umidade'}
             {activeTab === 'ai' && 'Central A.I.'}
             {activeTab === 'ac' && 'Climatização AC'}
+            {activeTab === 'devices' && 'Dispositivos (Frota)'}
           </h2>
           {latestData && (
               <StatusBadge latestCreatedAt={latestData.created_at} />
@@ -148,6 +150,18 @@ export default function DashboardClient({ initialData }: { initialData: Telemetr
              className="space-y-6"
            >
              <ACWizard mac={latestData?.mac_address || undefined} />
+           </motion.div>
+          )}
+
+          {activeTab === 'devices' && (
+           <motion.div
+             key="devices"
+             initial={{ opacity: 0, y: 10 }}
+             animate={{ opacity: 1, y: 0 }}
+             exit={{ opacity: 0, y: -10 }}
+             className="space-y-6"
+           >
+             <DevicesList />
            </motion.div>
           )}
        </AnimatePresence>

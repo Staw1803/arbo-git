@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from 'react'
-import { Menu, LogOut, Printer, LifeBuoy, LayoutDashboard, Thermometer, Waves, BrainCircuit, AirVent } from 'lucide-react'
+import { Menu, LogOut, Printer, LifeBuoy, LayoutDashboard, Thermometer, Waves, BrainCircuit, AirVent, Server } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { logout } from '@/app/actions'
 import { useDashboard } from '../context'
@@ -76,6 +76,13 @@ export function DashboardMenu() {
             >
               <AirVent className={`mr-3 h-4 w-4 transition-colors ${activeTab === 'ac' ? 'text-blue-400' : 'text-gray-500 group-hover:text-blue-400'}`} />
               Climatização AC
+            </button>
+            <button
+              onClick={() => { setActiveTab('devices'); setIsOpen(false); }}
+              className={`flex w-full items-center px-4 py-2 text-sm transition-colors group cursor-pointer ${activeTab === 'devices' ? 'text-white bg-[#2a2a2a]' : 'text-gray-300 hover:bg-[#2a2a2a] hover:text-white'}`}
+            >
+              <Server className={`mr-3 h-4 w-4 transition-colors ${activeTab === 'devices' ? 'text-white' : 'text-gray-500 group-hover:text-white'}`} />
+              Dispositivos (Frota)
             </button>
 
             <div className="border-t border-[#333333] my-1"></div>

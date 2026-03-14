@@ -41,7 +41,6 @@ export function AuditTable({ data }: { data: TelemetryData[] }) {
                     <TableHeader>
                         <TableRow className="border-white/10 hover:bg-transparent">
                             <TableHead className="text-gray-500 font-normal">ID Dispositivo</TableHead>
-                            <TableHead className="text-gray-500 font-normal">MAC Address</TableHead>
                             <TableHead className="text-gray-500 font-normal hidden sm:table-cell">Setor</TableHead>
                             <TableHead className="text-gray-500 font-normal text-right">Último Pulso</TableHead>
                         </TableRow>
@@ -52,7 +51,6 @@ export function AuditTable({ data }: { data: TelemetryData[] }) {
                                 <TableCell className="font-mono text-xs text-gray-300">
                                    {row.id.split('-')[0]}...
                                 </TableCell>
-                                <TableCell className="font-mono text-xs">{row.mac_address || '00:00:00:00:00:00'}</TableCell>
                                 <TableCell className="text-gray-400 hidden sm:table-cell">Laboratório Central</TableCell>
                                 <TableCell className="text-right text-gray-300 text-sm">
                                     {formatDistanceToNow(new Date(row.created_at), { addSuffix: true, locale: ptBR })}
@@ -61,7 +59,7 @@ export function AuditTable({ data }: { data: TelemetryData[] }) {
                         ))}
                         {sortedData.length === 0 && (
                              <TableRow className="border-none hover:bg-transparent">
-                                <TableCell colSpan={4} className="h-24 text-center text-gray-500">
+                                <TableCell colSpan={3} className="h-24 text-center text-gray-500">
                                     Nenhum registro encontrado.
                                 </TableCell>
                             </TableRow>

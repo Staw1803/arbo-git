@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState } from 'react'
 
-type TabState = 'overview' | 'temperature' | 'humidity' | 'ai' | 'ac'
+type TabState = 'overview' | 'temperature' | 'humidity' | 'ai' | 'ac' | 'devices'
 
 interface DashboardContextType {
   activeTab: TabState;

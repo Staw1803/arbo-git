@@ -129,7 +129,7 @@ export function DiscoveryBanner() {
                 <div className="flex items-center gap-3 border-b border-neutral-800 pb-3">
                   <Cpu className="h-5 w-5 text-white" />
                   <div>
-                    <h4 className="font-bold text-white text-sm">Configurando {device.mac_address}</h4>
+                    <h4 className="font-bold text-white text-sm">Configurando Novo Dispositivo</h4>
                     <p className="text-[10px] text-neutral-400 font-mono">Defina os detalhes da sala e nome.</p>
                   </div>
                 </div>
@@ -182,7 +182,7 @@ export function DiscoveryBanner() {
                   <div>
                     <h3 className="text-sm font-bold text-white">Novo vaso A.R.B.O. detectado na rede</h3>
                     <p className="text-xs text-neutral-400 mt-0.5">
-                      MAC: <span className="font-mono text-neutral-300">{device.mac_address}</span> transmitiu sinal nos últimos 5 minutos.
+                      ID Final: <span className="font-mono text-neutral-300">{device.mac_address.slice(-5)}</span> transmitiu sinal nos últimos 5 minutos.
                     </p>
                   </div>
                 </div>
