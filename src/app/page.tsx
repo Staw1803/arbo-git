@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Smile, Sprout, BarChart3, TrendingDown, Zap, Shield, ArrowRight, Leaf, Building2, LineChart } from 'lucide-react';
+import { Smile, TrendingDown, Zap, ArrowRight, Leaf, Building2, LineChart } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 
 export default function Home() {
@@ -8,19 +8,17 @@ export default function Home() {
     <main className="flex min-h-screen flex-col bg-black text-white selection:bg-white selection:text-black">
 
       {/* Hero */}
-      <section className="flex flex-col items-center justify-center min-h-screen p-8 lg:p-24 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.03]" style={{backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '60px 60px'}} />
+      <section className="flex flex-col items-center justify-center min-h-screen p-8 lg:p-24 relative overflow-hidden bg-black">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-zinc-900 via-black to-black opacity-50" />
         <div className="flex flex-col items-center gap-10 text-center max-w-4xl mx-auto relative z-10">
           <Logo className="w-52 h-52 text-white" />
           <div className="space-y-4">
             <p className="text-xs font-mono tracking-[0.4em] text-gray-500 uppercase">Plataforma de Governança Ambiental</p>
-            <h1 className="text-4xl lg:text-6xl font-black tracking-tight text-white leading-tight">
-              Inteligência Ambiental<br />
-              <span className="text-gray-400">para o Negócio</span>
+            <h1 className="text-4xl lg:text-6xl font-black tracking-tighter text-white leading-tight">
+              Inteligência Ambiental.
             </h1>
-            <p className="text-lg text-gray-400 max-w-2xl leading-relaxed mx-auto">
-              Telemetria ambiental em tempo real com decisões autônomas orientadas por Inteligência Artificial —
-              reduzindo custos e maximizando eficiência operacional.
+            <p className="text-lg text-zinc-400 max-w-2xl leading-relaxed mx-auto">
+              Telemetria autônoma e governança de dados para a climatização corporativa.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-4 items-center">
@@ -44,11 +42,11 @@ export default function Home() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto text-center">
           <div>
             <p className="text-3xl font-black text-white">RT</p>
-            <p className="text-xs text-gray-500 tracking-widest mt-1 uppercase">Dados em Tempo Real</p>
+            <p className="text-xs text-gray-500 tracking-widest mt-1 uppercase">Telemetria de Alta Fidelidade</p>
           </div>
           <div>
             <p className="text-3xl font-black text-white">A.I.</p>
-            <p className="text-xs text-gray-500 tracking-widest mt-1 uppercase">Decisões Autônomas</p>
+            <p className="text-xs text-gray-500 tracking-widest mt-1 uppercase">Núcleo Preditivo</p>
           </div>
           <div>
             <p className="text-3xl font-black text-white">24/7</p>
@@ -72,36 +70,36 @@ export default function Home() {
             </p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
-            <div className="border border-white/10 p-10 group hover:bg-white/[0.03] transition-all duration-300">
-              <TrendingDown className="h-8 w-8 text-green-400 mb-6 stroke-[1.5]" />
+            <div className="border border-zinc-800 p-10 group hover:border-zinc-600 transition-colors duration-300 bg-black">
+              <TrendingDown className="h-8 w-8 text-zinc-400 mb-6" strokeWidth={1.2} />
               <h3 className="text-xl font-bold mb-3">Redução de Desperdício</h3>
-              <p className="text-sm text-gray-400 leading-relaxed">
+              <p className="text-sm text-zinc-400 leading-relaxed">
                 Acionamentos inteligentes e baseados em dados evitam o uso desnecessário de recursos, reduzindo perdas operacionais e custos variáveis mensais.
               </p>
-              <div className="mt-6 pt-6 border-t border-white/10">
-                <p className="text-3xl font-black text-green-400">↓ Custos</p>
+              <div className="mt-6 pt-6 border-t border-zinc-800 group-hover:border-zinc-700 transition-colors duration-300">
+                <p className="text-3xl font-black text-white">↓ Custos</p>
                 <p className="text-xs text-gray-500 mt-1">por automação de acionamento</p>
               </div>
             </div>
-            <div className="border border-white/10 border-l-0 p-10 group hover:bg-white/[0.03] transition-all duration-300">
-              <Zap className="h-8 w-8 text-yellow-400 mb-6 stroke-[1.5]" />
+            <div className="border border-zinc-800 lg:border-l-0 p-10 group hover:border-zinc-600 transition-colors duration-300 bg-black">
+              <Zap className="h-8 w-8 text-zinc-400 mb-6" strokeWidth={1.2} />
               <h3 className="text-xl font-bold mb-3">Eficiência Energética</h3>
-              <p className="text-sm text-gray-400 leading-relaxed">
+              <p className="text-sm text-zinc-400 leading-relaxed">
                 Leituras em tempo real e controle de ciclos de consumo permitem que equipamentos operem apenas quando necessário — reduzindo a conta de energia.
               </p>
-              <div className="mt-6 pt-6 border-t border-white/10">
-                <p className="text-3xl font-black text-yellow-400">↑ Eficiência</p>
+              <div className="mt-6 pt-6 border-t border-zinc-800 group-hover:border-zinc-700 transition-colors duration-300">
+                <p className="text-3xl font-black text-white">↑ Eficiência</p>
                 <p className="text-xs text-gray-500 mt-1">por controle de ciclos de consumo</p>
               </div>
             </div>
-            <div className="border border-white/10 border-l-0 p-10 group hover:bg-white/[0.03] transition-all duration-300">
-              <LineChart className="h-8 w-8 text-blue-400 mb-6 stroke-[1.5]" />
+            <div className="border border-zinc-800 lg:border-l-0 p-10 group hover:border-zinc-600 transition-colors duration-300 bg-black">
+              <LineChart className="h-8 w-8 text-zinc-400 mb-6" strokeWidth={1.2} />
               <h3 className="text-xl font-bold mb-3">Governança por Dados</h3>
-              <p className="text-sm text-gray-400 leading-relaxed">
+              <p className="text-sm text-zinc-400 leading-relaxed">
                 Histórico completo e auditável de todas as ações e leituras. Relatórios prontos para justificar investimentos e demonstrar impacto ao corpo diretivo.
               </p>
-              <div className="mt-6 pt-6 border-t border-white/10">
-                <p className="text-3xl font-black text-blue-400">↑ Visibilidade</p>
+              <div className="mt-6 pt-6 border-t border-zinc-800 group-hover:border-zinc-700 transition-colors duration-300">
+                <p className="text-3xl font-black text-white">↑ Visibilidade</p>
                 <p className="text-xs text-gray-500 mt-1">via relatórios e histórico</p>
               </div>
             </div>
@@ -117,35 +115,35 @@ export default function Home() {
             <h2 className="text-3xl lg:text-4xl font-black tracking-tight">Pilares do projeto</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="rounded-none border-white/20 bg-transparent text-white hover:bg-white/5 transition-all duration-300">
+            <Card className="rounded-none border border-zinc-800 bg-black text-white hover:border-zinc-600 shadow-none transition-colors duration-300">
               <CardHeader className="flex flex-col space-y-4 pb-4">
-                <Smile className="h-8 w-8 text-white stroke-[1.5]" />
+                <Smile className="h-8 w-8 text-zinc-400" strokeWidth={1.2} />
                 <CardTitle className="text-xl font-semibold tracking-wide">Conforto & Bem-Estar</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-400 leading-relaxed">
+                <p className="text-sm text-zinc-400 leading-relaxed">
                   Ambientes com ambiente calibrado aumentam em até 15% a produtividade e reduzem o estresse ocupacional, em conformidade com a NR-17.
                 </p>
               </CardContent>
             </Card>
-            <Card className="rounded-none border-white/20 bg-transparent text-white hover:bg-white/5 transition-all duration-300">
+            <Card className="rounded-none border border-zinc-800 bg-black text-white hover:border-zinc-600 shadow-none transition-colors duration-300">
               <CardHeader className="flex flex-col space-y-4 pb-4">
-                <Leaf className="h-8 w-8 text-white stroke-[1.5]" />
+                <Leaf className="h-8 w-8 text-zinc-400" strokeWidth={1.2} />
                 <CardTitle className="text-xl font-semibold tracking-wide">ESG & Sustentabilidade</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-400 leading-relaxed">
+                <p className="text-sm text-zinc-400 leading-relaxed">
                   Dados rastreáveis para demonstrar práticas sustentáveis, alinhadas às metas ESG e critérios de certificação ambiental corporativa.
                 </p>
               </CardContent>
             </Card>
-            <Card className="rounded-none border-white/20 bg-transparent text-white hover:bg-white/5 transition-all duration-300">
+            <Card className="rounded-none border border-zinc-800 bg-black text-white hover:border-zinc-600 shadow-none transition-colors duration-300">
               <CardHeader className="flex flex-col space-y-4 pb-4">
-                <Building2 className="h-8 w-8 text-white stroke-[1.5]" />
+                <Building2 className="h-8 w-8 text-zinc-400" strokeWidth={1.2} />
                 <CardTitle className="text-xl font-semibold tracking-wide">Inteligência Corporativa</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-400 leading-relaxed">
+                <p className="text-sm text-zinc-400 leading-relaxed">
                   Dados centralizados para auditoria, relatórios executivos e tomada de decisão estratégica baseada em métricas reais.
                 </p>
               </CardContent>

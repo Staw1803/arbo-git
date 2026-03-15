@@ -3,17 +3,18 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { BentoGrid } from './components/BentoGrid'
-import { HistoryChart } from './components/HistoryChart'
 import { AuditTable } from './components/AuditTable'
 import { StatusBadge } from './components/StatusBadge'
-import { TemperatureChart } from './components/TemperatureChart'
-import { HumidityChart } from './components/HumidityChart'
-import { AIEnginePanel } from './components/AIEnginePanel'
-import { ACWizard } from './components/ACWizard'
 import { DiscoveryBanner } from './components/DiscoveryBanner'
 import { DevicesList } from './components/DevicesList'
 import { useDashboard } from './context'
-import { motion, AnimatePresence } from 'framer-motion'
+import dynamic from 'next/dynamic'
+
+const HistoryChart = dynamic(() => import('./components/HistoryChart').then((mod) => ({ default: mod.HistoryChart })), { ssr: false })
+const TemperatureChart = dynamic(() => import('./components/TemperatureChart').then((mod) => ({ default: mod.TemperatureChart })), { ssr: false })
+const HumidityChart = dynamic(() => import('./components/HumidityChart').then((mod) => ({ default: mod.HumidityChart })), { ssr: false })
+const AIEnginePanel = dynamic(() => import('./components/AIEnginePanel').then((mod) => ({ default: mod.AIEnginePanel })), { ssr: false })
+const ACWizard = dynamic(() => import('./components/ACWizard').then((mod) => ({ default: mod.ACWizard })), { ssr: false })
 
 
 interface TelemetryData {
@@ -88,83 +89,49 @@ export default function DashboardClient({ initialData }: { initialData: Telemetr
           )}
        </div>
 
-       <AnimatePresence mode="wait">
+       <div className="transition-all duration-300">
          {activeTab === 'overview' && (
-           <motion.div 
-             key="overview"
-             initial={{ opacity: 0, y: 10 }}
-             animate={{ opacity: 1, y: 0 }}
-             exit={{ opacity: 0, y: -10 }}
-             className="space-y-6"
-           >
+           <div className="space-y-6 transition-all duration-300 opacity-100">
              <BentoGrid data={latestData} />
-             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                 <HistoryChart data={data} />
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                 <div className="lg:col-span-2">
+                   <HistoryChart data={data} />
+                 </div>
                  <AuditTable data={data} />
              </div>
-           </motion.div>
+           </div>
          )}
 
          {activeTab === 'temperature' && (
-           <motion.div
-             key="temperature"
-             initial={{ opacity: 0, y: 10 }}
-             animate={{ opacity: 1, y: 0 }}
-             exit={{ opacity: 0, y: -10 }}
-             className="space-y-6"
-           >
+           <div className="space-y-6 transition-all duration-300 opacity-100">
              <TemperatureChart data={data} />
-           </motion.div>
+           </div>
          )}
 
          {activeTab === 'humidity' && (
-           <motion.div
-             key="humidity"
-             initial={{ opacity: 0, y: 10 }}
-             animate={{ opacity: 1, y: 0 }}
-             exit={{ opacity: 0, y: -10 }}
-             className="space-y-6"
-           >
+           <div className="space-y-6 transition-all duration-300 opacity-100">
              <HumidityChart data={data} />
-           </motion.div>
+           </div>
          )}
 
           {activeTab === 'ai' && (
-           <motion.div
-             key="ai"
-             initial={{ opacity: 0, y: 10 }}
-             animate={{ opacity: 1, y: 0 }}
-             exit={{ opacity: 0, y: -10 }}
-             className="space-y-6"
-           >
+           <div className="space-y-6 transition-all duration-300 opacity-100">
              <AIEnginePanel mac={latestData?.mac_address || undefined} />
-           </motion.div>
+           </div>
           )}
 
           {activeTab === 'ac' && (
-           <motion.div
-             key="ac"
-             initial={{ opacity: 0, y: 10 }}
-             animate={{ opacity: 1, y: 0 }}
-             exit={{ opacity: 0, y: -10 }}
-             className="space-y-6"
-           >
+           <div className="space-y-6 transition-all duration-300 opacity-100">
              <ACWizard mac={latestData?.mac_address || undefined} />
-           </motion.div>
+           </div>
           )}
 
           {activeTab === 'devices' && (
-           <motion.div
-             key="devices"
-             initial={{ opacity: 0, y: 10 }}
-             animate={{ opacity: 1, y: 0 }}
-             exit={{ opacity: 0, y: -10 }}
-             className="space-y-6"
-           >
+           <div className="space-y-6 transition-all duration-300 opacity-100">
              <DevicesList />
-           </motion.div>
+           </div>
           )}
-       </AnimatePresence>
+       </div>
     </div>
   )
 }

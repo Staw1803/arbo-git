@@ -39,7 +39,6 @@ export function HistoryChart({ data }: { data: TelemetryData[] }) {
                 <div className="h-[400px] w-full mt-4">
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={formattedData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
                             <XAxis 
                                 dataKey="time" 
                                 stroke="#555" 
@@ -72,7 +71,8 @@ export function HistoryChart({ data }: { data: TelemetryData[] }) {
                                 type="monotone" 
                                 dataKey="umid_ar" 
                                 stroke="#888888" 
-                                strokeWidth={1.5} 
+                                strokeWidth={1.5}
+                                strokeDasharray="5 5" 
                                 dot={false} 
                                 name="Umid (%)"
                             />

@@ -27,15 +27,13 @@ export function StatusBadge({ latestCreatedAt }: { latestCreatedAt?: string }) {
   if (!mounted || !latestCreatedAt) return null
 
   return (
-    <span className={`text-xs ${isOnline ? 'text-white' : 'text-gray-500'} font-mono tracking-wider flex items-center gap-2`}>
-      <span className="relative flex h-2 w-2">
-        {isOnline && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>}
-        <span className={`relative inline-flex rounded-full h-2 w-2 ${isOnline ? 'bg-white' : 'bg-gray-500'}`}></span>
+    <div className={`inline-flex items-center gap-2 px-3 py-1.5 border border-zinc-800 rounded-none bg-black`}>
+      <span className={`text-[10px] font-mono tracking-widest ${isOnline ? 'text-white' : 'text-zinc-600'}`}>
+        {isOnline ? '[ ONLINE ]' : '[ OFFLINE ]'}
       </span>
-      {isOnline ? 'SISTEMA ONLINE' : 'SISTEMA OFFLINE'}
-      <span className="text-gray-500 ml-2 hidden sm:inline">
-        (Atualizado há {secondsAgo}s)
+      <span className="text-[10px] text-zinc-600 font-mono hidden sm:inline border-l border-zinc-800 pl-2">
+        {secondsAgo}s
       </span>
-    </span>
+    </div>
   )
 }
