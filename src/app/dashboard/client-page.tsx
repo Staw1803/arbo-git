@@ -7,6 +7,7 @@ import { AuditTable } from './components/AuditTable'
 import { StatusBadge } from './components/StatusBadge'
 import { DiscoveryBanner } from './components/DiscoveryBanner'
 import { DevicesList } from './components/DevicesList'
+import { AQIAlert } from './components/AQIWidget'
 import { useDashboard } from './context'
 import dynamic from 'next/dynamic'
 
@@ -75,6 +76,7 @@ export default function DashboardClient({ initialData }: { initialData: Telemetr
   return (
     <div className="space-y-6">
        <DiscoveryBanner />
+       <AQIAlert />
        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h2 className="text-3xl font-bold tracking-tight">
             {activeTab === 'overview' && 'Visão Geral'}
