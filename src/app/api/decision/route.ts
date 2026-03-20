@@ -16,16 +16,26 @@ export async function GET(request: Request) {
     // 1. Fetch the Monthly Ceiling (Baseline)
     const { data: bills } = await supabase
       .from("energy_bills")
-      .select("monthly_ceiling, kwh_consumption")
+      .select("monthly_ceiling, kwh_consumption, created_at")
       .order("created_at", { ascending: false })
       .limit(1)
 
-    const ceiling = bills && bills.length > 0 ? bills[0].monthly_ceiling : null
+    if (!bills || bills.length === 0) {
+      return NextResponse.json({ message: "Sem linha de base cadastrada. Motor inativo." })
+    }
+
+    const billsRecord = bills[0]
+    const ceiling = billsRecord.monthly_ceiling || null
     
     // If there's no ceiling, we can't make financial decisions yet
     if (!ceiling) {
-      return NextResponse.json({ message: "Sem linha de base cadastrada. Motor inativo." })
+      return NextResponse.json({ message: "Limites não estabelecidos." })
     }
+
+    // Determine se a empresa está no Modo de Aprendizado (15 dias)
+    const baselineDate = new Date(billsRecord.created_at)
+    const msSinceBaseline = Date.now() - baselineDate.getTime()
+    const isLearningMode = (msSinceBaseline < 15 * 24 * 60 * 60 * 1000)
 
     // 2. Fetch recent telemetry (last 15 minutes)
     const fifteenMinsAgo = new Date(Date.now() - 15 * 60000).toISOString()
@@ -65,28 +75,42 @@ export async function GET(request: Request) {
 
        if (!recentCommand || recentCommand.length === 0) {
          console.log("Condição atingida. Acionando desligamento autônomo.")
-         
-         // Insert Command to Vaso
-         await supabase.from("device_commands").insert({
-           mac_address,
-           command: "AC_OFF",
-           payload: { source: "ARBO_AI_ENGINE" },
-           status: "PENDING"
-         })
+         const assumedSavings = parseFloat((ceiling * 0.01).toFixed(2))
 
-         // Log to Audit
-         const assumedSavings = parseFloat((ceiling * 0.01).toFixed(2)) // Example: saved 1% of ceiling by turning off early
-         await supabase.from("audit_logs").insert({
-           action: "AC_TURN_OFF",
-           reason: "Consumo projetado alto detectado e sala vazia por >15min",
-           savings_generated_brl: assumedSavings
-         })
+         if (isLearningMode) {
+             // O vaso DEVE NÃO desligar o ar. Apenas registra.
+             await supabase.from("audit_logs").insert({
+               action: "LEARNING_SIMULATION",
+               reason: "Modo Aprendizado (+Projeção Alta & Sala Vazia)",
+               savings_generated_brl: assumedSavings
+             })
 
-         return NextResponse.json({
-           action: "AC_TURN_OFF",
-           message: "Ar condicionado desligado automaticamente por inatividade.",
-           savings: assumedSavings
-         })
+             return NextResponse.json({
+               action: "LEARNING_SIMULATION",
+               message: "Ar condicionado seria desligado, mas o Modo de Aprendizado (Capital Humano) está mapeando potenciais.",
+               savings: assumedSavings
+             })
+         } else {
+             // Modo Real, desliga o ar.
+             await supabase.from("device_commands").insert({
+               mac_address,
+               command: "AC_OFF",
+               payload: { source: "ARBO_AI_ENGINE" },
+               status: "PENDING"
+             })
+
+             await supabase.from("audit_logs").insert({
+               action: "AC_TURN_OFF",
+               reason: "Consumo projetado alto detectado e sala vazia por >15min",
+               savings_generated_brl: assumedSavings
+             })
+
+             return NextResponse.json({
+               action: "AC_TURN_OFF",
+               message: "Ar condicionado desligado automaticamente por inatividade.",
+               savings: assumedSavings
+             })
+         }
        }
     }
 
@@ -94,6 +118,7 @@ export async function GET(request: Request) {
       status: "Monitoring",
       projected: projectedConsumptionValue,
       ceiling: ceiling,
+      isLearningMode,
       noPresenceFor15Mins
     })
 

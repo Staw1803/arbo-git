@@ -9,6 +9,7 @@ interface ESGData {
   projected_spend: number
   total_savings_brl: number
   carbon_reduced_kg: number
+  baseline_date: string | null
 }
 
 export function ESGWidgets() {
@@ -61,11 +62,18 @@ export function ESGWidgets() {
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)
   const percentUsed = Math.min(100, (data.projected_spend / data.ceiling) * 100)
 
+  const isLearningMode = data.baseline_date ? (Date.now() - new Date(data.baseline_date).getTime() < 15 * 24 * 60 * 60 * 1000) : false
+
   return (
     <div className="lg:col-span-4 mt-6">
        <div className="mb-4 flex items-center justify-between border-b border-zinc-800 pb-2">
           <h2 className="text-lg font-black text-white tracking-widest flex items-center gap-2">
              <Leaf className="w-5 h-5 text-green-500" /> A.R.B.O. GOVERNANÇA ESG
+             {isLearningMode && (
+               <span className="ml-2 bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded text-[10px] uppercase font-mono tracking-widest animate-pulse">
+                 Modo Aprendizado Ativo
+               </span>
+             )}
           </h2>
           <span className="text-[10px] font-mono text-zinc-500 tracking-widest">ATUALIZAÇÃO EM TEMPO REAL</span>
        </div>
@@ -94,12 +102,12 @@ export function ESGWidgets() {
           <Card className="rounded-none border-l-4 border-l-green-500 border-zinc-800 bg-black relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 blur-2xl rounded-full" />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-transparent z-10 relative">
-               <CardTitle className="text-[10px] font-mono tracking-widest text-green-400/80">ECONOMIA ATIVA</CardTitle>
+               <CardTitle className="text-[10px] font-mono tracking-widest text-green-400/80">ECONOMIA {isLearningMode ? 'PROJETADA' : 'ATIVA'}</CardTitle>
                <PiggyBank className="h-4 w-4 text-green-500" strokeWidth={1.5} />
             </CardHeader>
             <CardContent className="z-10 relative">
                <div className="text-3xl font-black text-green-400 tracking-tighter">{formatCurrency(data.total_savings_brl)}</div>
-               <p className="text-[10px] text-zinc-500 mt-2 font-mono leading-tight">Valor economizado autonomamente por decisões do A.R.B.O. neste mês.</p>
+               <p className="text-[10px] text-zinc-500 mt-2 font-mono leading-tight">Valor economizado {isLearningMode ? 'simuladamente na fase de leitura.' : 'autonomamente por decisões do A.R.B.O. neste mês.'}</p>
             </CardContent>
           </Card>
 

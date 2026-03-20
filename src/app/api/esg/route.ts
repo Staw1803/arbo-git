@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     // 1. Fetch latest baseline (teto mensal)
     const { data: bills } = await supabase
       .from("energy_bills")
-      .select("monthly_ceiling, kwh_consumption")
+      .select("monthly_ceiling, kwh_consumption, created_at")
       .eq("company_id", user.id)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -46,7 +46,8 @@ export async function GET(request: Request) {
       ceiling: baseline?.monthly_ceiling || 0,
       projected_spend: projectedSpend,
       total_savings_brl: totalSavings,
-      carbon_reduced_kg: carbonReducedKg
+      carbon_reduced_kg: carbonReducedKg,
+      baseline_date: baseline?.created_at || null
     })
 
   } catch (err: any) {
