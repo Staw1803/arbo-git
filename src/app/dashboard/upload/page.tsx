@@ -33,10 +33,20 @@ export default function UploadPage() {
         body: formData,
       })
 
-      const data = await response.json()
+      let data;
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        if (response.status === 413) {
+           throw new Error("Arquivo muito grande. O limite da Vercel para este tipo de envio direto é de 4MB.");
+        }
+        throw new Error(`Erro inesperado do servidor (${response.status}): ${text.substring(0, 50)}...`);
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || "Erro ao processar a fatura.")
+        throw new Error(data?.error || "Erro ao processar a fatura.");
       }
 
       setResult(data)
@@ -85,9 +95,16 @@ export default function UploadPage() {
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                   <UploadCloud className="w-10 h-10 mb-3 text-zinc-500 group-hover:text-white transition-colors" />
                   <p className="mb-2 text-sm text-zinc-400"><span className="font-semibold text-white">Clique para enviar</span> ou arraste e solte</p>
-                  <p className="text-xs text-zinc-600 font-mono">PDF, PNG, JPG (MAX. 10MB)</p>
+                  <p className="text-xs text-zinc-600 font-mono">PDF, PNG, JPG (MAX. 4MB)</p>
                 </div>
-                <input id="dropzone-file" type="file" className="hidden" accept=".pdf,image/png,image/jpeg" onChange={handleFileChange} />
+                <input id="dropzone-file" type="file" className="hidden" accept=".pdf,image/png,image/jpeg" onChange={(e) => {
+                  if (e.target.files && e.target.files[0].size > 4 * 1024 * 1024) {
+                    setError("Arquivo excede o limite de 4MB da plataforma. Por favor comprima o PDF ou Imagem.");
+                    setFile(null);
+                  } else {
+                    handleFileChange(e);
+                  }
+                }} />
              </label>
             )}
           </CardContent>
