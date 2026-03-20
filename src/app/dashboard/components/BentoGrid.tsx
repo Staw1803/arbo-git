@@ -5,6 +5,7 @@ import { Thermometer, Activity, Waves } from "lucide-react"
 import { WeatherWidget } from "./WeatherWidget"
 import { AneelWidget } from "./AneelWidget"
 import { AQIWidget } from "./AQIWidget"
+import { ESGWidgets } from "./ESGWidgets"
 
 interface SensorProps {
     temp: number;
@@ -95,6 +96,9 @@ export function BentoGrid({ data }: { data: SensorProps | null }) {
             <div className="lg:col-span-2">
                 <AQIWidget />
             </div>
+
+            {/* Governança A.R.B.O. ESG */}
+            <ESGWidgets />
         </div>
     )
 }
