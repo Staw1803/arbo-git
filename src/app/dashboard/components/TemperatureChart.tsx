@@ -8,7 +8,7 @@ import { Thermometer } from "lucide-react"
 
 interface TelemetryData {
     created_at: string;
-    temp: number;
+    temperatura: number;
 }
 
 export function TemperatureChart({ data }: { data: TelemetryData[] }) {
@@ -71,7 +71,7 @@ export function TemperatureChart({ data }: { data: TelemetryData[] }) {
                             />
                             <Area 
                                 type="monotone" 
-                                dataKey="temp" 
+                                dataKey="temperatura" 
                                 stroke="#f97316" 
                                 strokeWidth={3} 
                                 fillOpacity={1} 

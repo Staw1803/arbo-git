@@ -9,8 +9,8 @@ import { useEffect, useState } from "react"
 
 interface TelemetryData {
     created_at: string;
-    temp: number;
-    umid_ar: number;
+    temperatura: number;
+    umidade: number;
     presenca: boolean;
 }
 
@@ -20,10 +20,10 @@ const TARIFA_POR_KWH = 0.826
 
 function calcCustoHora(entry: TelemetryData): number {
   // AC ativo se ocupação ativa e temperatura acima de 23°C
-  const acAtivo = entry.presenca || entry.temp > 26
+  const acAtivo = entry.presenca || entry.temperatura > 26
   if (!acAtivo) return 0
   // Fator de intensidade: 100% se temp > 28, 60% se entre 23-28
-  const fator = entry.temp > 28 ? 1.0 : 0.6
+  const fator = entry.temperatura > 28 ? 1.0 : 0.6
   return parseFloat((AC_POTENCIA_KW * TARIFA_POR_KWH * fator).toFixed(4))
 }
 
@@ -51,7 +51,7 @@ export function HistoryChart({ data }: { data: TelemetryData[] }) {
 
     const formattedData = sortedData.map(d => ({
         time: format(new Date(d.created_at), 'HH:mm'),
-        temp: parseFloat(d.temp?.toFixed(1)),
+        temperatura: parseFloat(d.temperatura?.toFixed(1)),
         custo: calcCustoHora(d),
     }))
 
@@ -109,7 +109,7 @@ export function HistoryChart({ data }: { data: TelemetryData[] }) {
                             <Line
                                 yAxisId="temp"
                                 type="monotone"
-                                dataKey="temp"
+                                dataKey="temperatura"
                                 stroke="#ffffff"
                                 strokeWidth={1.5}
                                 dot={false}

@@ -21,8 +21,8 @@ const ACWizard = dynamic(() => import('./components/ACWizard').then((mod) => ({ 
 interface TelemetryData {
   id: string;
   created_at: string;
-  temp: number;
-  umid_ar: number;
+  temperatura: number;
+  umidade: number;
   umid_solo: number;
   presenca: boolean;
   mac_address: string;
@@ -39,11 +39,18 @@ export default function DashboardClient({ initialData }: { initialData: Telemetr
       const { data: fetchResult, error } = await supabase
         .from('telemetria')
         .select('*')
+        .ilike('mac_address', 'cc:db:a7:92:25:64')
         .order('created_at', { ascending: false })
         .limit(50)
       
       if (fetchResult && !error) {
-        setData(fetchResult)
+        const parsedData = fetchResult.map(item => ({
+            ...item,
+            temperatura: Number(item.temperatura) || 0,
+            umidade: Number(item.umidade) || 0,
+            umid_solo: Number(item.umid_solo) || 0,
+        })) as TelemetryData[];
+        setData(parsedData)
       }
     }
     
@@ -60,7 +67,16 @@ export default function DashboardClient({ initialData }: { initialData: Telemetr
           table: 'telemetria',
         },
         (payload) => {
-          setData((current) => [payload.new as TelemetryData, ...current].slice(0, 50))
+          const newData = payload.new as any;
+          if (newData.mac_address && String(newData.mac_address).toUpperCase() === 'CC:DB:A7:92:25:64') {
+            const safeData: TelemetryData = {
+                ...newData,
+                temperatura: Number(newData.temperatura) || 0,
+                umidade: Number(newData.umidade) || 0,
+                umid_solo: Number(newData.umid_solo) || 0,
+            };
+            setData((current) => [safeData, ...current].slice(0, 50))
+          }
         }
       )
       .subscribe()

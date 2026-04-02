@@ -49,7 +49,7 @@ export function AuditTable({ data }: { data: TelemetryData[] }) {
                         {sortedData.slice(0, 10).map((row) => (
                             <TableRow key={row.id} className="border-white/5 hover:bg-white/5 transition-colors">
                                 <TableCell className="font-mono text-xs text-gray-300">
-                                   {row.id.split('-')[0]}...
+                                   {String(row.id).split('-')[0]}...
                                 </TableCell>
                                 <TableCell className="text-gray-400 hidden sm:table-cell">Laboratório Central</TableCell>
                                 <TableCell className="text-right text-gray-300 text-sm">

@@ -15,7 +15,22 @@ export async function POST(req: NextRequest) {
     const ai = new GoogleGenAI(aiOptions)
 
     const buffer = await file.arrayBuffer()
-    const base64Data = Buffer.from(buffer).toString("base64")
+    const nodeBuffer = Buffer.from(buffer)
+
+    // Validar Magic Bytes
+    const hexString = nodeBuffer.subarray(0, 4).toString("hex").toUpperCase()
+    const isPDF = hexString === "25504446"
+    const isPNG = hexString === "89504E47"
+    const isJPEG = hexString.startsWith("FFD8FF")
+
+    if (!isPDF && !isPNG && !isJPEG) {
+      return NextResponse.json(
+        { error: "Formato de arquivo inválido e/ou corrompido (Assinatura Magic Byte não reconhecida)." },
+        { status: 400 }
+      )
+    }
+
+    const base64Data = nodeBuffer.toString("base64")
     const mimeType = file.type || "application/pdf"
     
     let instructions = `

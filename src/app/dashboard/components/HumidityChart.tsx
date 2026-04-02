@@ -8,7 +8,7 @@ import { Waves } from "lucide-react"
 
 interface TelemetryData {
     created_at: string;
-    umid_ar: number;
+    umidade: number;
 }
 
 export function HumidityChart({ data }: { data: TelemetryData[] }) {
@@ -71,7 +71,7 @@ export function HumidityChart({ data }: { data: TelemetryData[] }) {
                             />
                             <Area 
                                 type="monotone" 
-                                dataKey="umid_ar" 
+                                dataKey="umidade" 
                                 stroke="#3b82f6" 
                                 strokeWidth={3} 
                                 fillOpacity={1} 

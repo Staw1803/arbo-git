@@ -8,8 +8,8 @@ import { AQIWidget } from "./AQIWidget"
 import { ESGWidgets } from "./ESGWidgets"
 
 interface SensorProps {
-    temp: number;
-    umid_ar: number;
+    temperatura: number;
+    umidade: number;
     presenca: boolean;
 }
 
@@ -45,9 +45,9 @@ export function BentoGrid({ data }: { data: SensorProps | null }) {
                     <Thermometer className="h-4 w-4 text-zinc-400" strokeWidth={1.2} />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-4xl font-black text-white tracking-tighter">{data.temp?.toFixed(1) ?? '--'}°C</div>
+                    <div className="text-4xl font-black text-white tracking-tighter">{data.temperatura?.toFixed(1) ?? '--'}°C</div>
                     <p className="text-xs text-zinc-500 mt-2 font-mono">INTERNA</p>
-                    <MetricBar value={data.temp} max={45} color="bg-white/60" />
+                    <MetricBar value={data.temperatura} max={45} color="bg-white/60" />
                 </CardContent>
             </Card>
 
@@ -59,9 +59,9 @@ export function BentoGrid({ data }: { data: SensorProps | null }) {
                     <Waves className="h-4 w-4 text-zinc-400" strokeWidth={1.2} />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-4xl font-black text-white tracking-tighter">{data.umid_ar?.toFixed(1) ?? '--'}%</div>
+                    <div className="text-4xl font-black text-white tracking-tighter">{data.umidade?.toFixed(1) ?? '--'}%</div>
                     <p className="text-xs text-zinc-500 mt-2 font-mono">RELATIVA DO AR</p>
-                    <MetricBar value={data.umid_ar} max={100} color="bg-zinc-400/50" />
+                    <MetricBar value={data.umidade} max={100} color="bg-zinc-400/50" />
                 </CardContent>
             </Card>
 

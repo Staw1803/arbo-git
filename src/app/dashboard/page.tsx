@@ -17,8 +17,19 @@ export default async function DashboardPage() {
   const { data: initialData } = await supabase
     .from('telemetria')
     .select('*')
+    .ilike('mac_address', 'cc:db:a7:92:25:64')
     .order('created_at', { ascending: false })
     .limit(50)
 
-  return <DashboardClient initialData={initialData || []} />
+  let parsedInitialData = []
+  if (initialData) {
+     parsedInitialData = initialData.map((item: any) => ({
+         ...item,
+         temperatura: Number(item.temperatura) || 0,
+         umidade: Number(item.umidade) || 0,
+         umid_solo: Number(item.umid_solo) || 0,
+     }))
+  }
+
+  return <DashboardClient initialData={parsedInitialData} />
 }
