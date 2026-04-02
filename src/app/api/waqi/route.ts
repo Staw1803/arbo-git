@@ -14,8 +14,8 @@ function getAQICategory(aqi: number): { category: string; color: string; healthI
 export async function GET() {
   if (!WAQI_TOKEN) {
     return NextResponse.json(
-      { error: 'WAQI_API_KEY não configurada. Obtenha em https://aqicn.org/data-platform/token/' },
-      { status: 503 }
+      { aqi: 0, category: 'Desconhecida', color: '#737373', healthImplication: 'API WAQI não configurada.', alertaAtivo: false, dominantPollutant: 'N/A', station: 'Sistema Offline', fetched_at: new Date().toISOString() },
+      { status: 200 }
     )
   }
 
@@ -26,8 +26,11 @@ export async function GET() {
     )
     const json = await res.json()
 
-    if (json.status !== 'ok') {
-      return NextResponse.json({ error: 'Estação WAQI indisponível.' }, { status: 502 })
+    if (json.status !== 'ok' || !json.data) {
+      return NextResponse.json(
+        { aqi: 0, category: 'Desconhecida', color: '#737373', healthImplication: 'Estação indisponível.', alertaAtivo: false, dominantPollutant: 'N/A', station: 'Sistema Offline', fetched_at: new Date().toISOString() },
+        { status: 200 }
+      )
     }
 
     const aqi = json.data.aqi as number
@@ -45,6 +48,9 @@ export async function GET() {
       fetched_at: new Date().toISOString(),
     })
   } catch {
-    return NextResponse.json({ error: 'Falha ao consultar WAQI.' }, { status: 500 })
+    return NextResponse.json(
+        { aqi: 0, category: 'Desconhecida', color: '#737373', healthImplication: 'Falha de comunicação', alertaAtivo: false, dominantPollutant: 'N/A', station: 'Sistema Offline', fetched_at: new Date().toISOString() },
+        { status: 200 }
+    )
   }
 }
