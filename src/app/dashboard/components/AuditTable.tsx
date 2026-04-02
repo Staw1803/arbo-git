@@ -21,9 +21,17 @@ interface TelemetryData {
 
 export function AuditTable({ data }: { data: TelemetryData[] }) {
     const [mounted, setMounted] = useState(false)
+    const [, setTick] = useState(0)
     
     useEffect(() => {
         setMounted(true)
+        
+        // Timer para forçar a re-renderização e atualizar os textos de "há X minutos"
+        const interval = setInterval(() => {
+            setTick(t => t + 1)
+        }, 30000)
+        
+        return () => clearInterval(interval)
     }, [])
 
     if (!mounted) return null
