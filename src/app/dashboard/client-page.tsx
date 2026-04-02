@@ -39,7 +39,6 @@ export default function DashboardClient({ initialData }: { initialData: Telemetr
       const { data: fetchResult, error } = await supabase
         .from('telemetria')
         .select('*')
-        .ilike('mac_address', 'cc:db:a7:92:25:64')
         .order('created_at', { ascending: false })
         .limit(50)
       
@@ -68,7 +67,7 @@ export default function DashboardClient({ initialData }: { initialData: Telemetr
         },
         (payload) => {
           const newData = payload.new as any;
-          if (newData.mac_address && String(newData.mac_address).toUpperCase() === 'CC:DB:A7:92:25:64') {
+          if (newData.mac_address) {
             const safeData: TelemetryData = {
                 ...newData,
                 temperatura: Number(newData.temperatura) || 0,

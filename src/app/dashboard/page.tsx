@@ -14,12 +14,11 @@ export default async function DashboardPage() {
   }
 
   // Initial data fetch utilizing authenticated client (will enforce RLS auto-magically)
-  const { data: initialData } = await supabase
-    .from('telemetria')
-    .select('*')
-    .ilike('mac_address', 'cc:db:a7:92:25:64')
-    .order('created_at', { ascending: false })
-    .limit(50)
+    const { data: initialData } = await supabase
+      .from('telemetria')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50)
 
   let parsedInitialData = []
   if (initialData) {
