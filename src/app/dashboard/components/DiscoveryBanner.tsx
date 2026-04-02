@@ -31,11 +31,11 @@ export function DiscoveryBanner() {
 
     const checkDiscovery = async () => {
       try {
-        // Find devices with status PENDING
+        // Find orphan devices without org_id
         const { data: devices } = await supabase
           .from("dispositivos")
           .select("mac_address, created_at")
-          .eq("status", "PENDING")
+          .is("org_id", null)
 
         if (!devices || devices.length === 0) {
           if (isMounted) setPendingDevices([])
@@ -74,15 +74,12 @@ export function DiscoveryBanner() {
     setIsSubmitting(true)
     
     try {
-      const { error } = await supabase
-        .from("dispositivos")
-        .update({
-          nome: formData.nome,
-          sala: formData.sala,
-          status: "ACTIVE",
-          user_id: userId,
-        })
-        .eq("mac_address", mac)
+      // Use RPC function for atomic claim and retroactive telemetry assignment
+      const { data, error } = await supabase.rpc('reivindicar_dispositivo', {
+         p_mac_address: mac,
+         p_nome: formData.nome,
+         p_sala: formData.sala
+      })
 
       if (!error) {
         setSuccessMsg(`Vaso ${mac} configurado com sucesso!`)
