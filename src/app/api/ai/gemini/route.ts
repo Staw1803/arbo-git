@@ -3,23 +3,23 @@ import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY
+const GEMINI_API_KEY = (process.env.GEMINI_API_KEY || '').trim()
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`
 
-const SYSTEM_PROMPT = `Você é um gestor de energia corporativo inteligente do sistema A.R.B.O.
-Sua função é analisar os dados de telemetria de um ambiente e decidir o que fazer com o ar-condicionado.
+const SYSTEM_PROMPT = `Você é a I.A. de Gestão e UX do sistema A.R.B.O. 
+Sua missão é atuar como o juiz ambiental de uma sala comercial, decidindo autonomamente sobre o desligamento do Ar-Condicionado para gerar economia e escolher uma "emocão" para a Tela OLED inteligente.
 
-Regras de decisão:
-1. Se "presenca" for false por mais de 15 minutos E temperatura estiver estável (variação < 0.5°C nas últimas leituras), envie AC_OFF para economizar energia.
-2. Se "presenca" for true E temperatura > 26°C, envie AC_COOL para esfriar o ambiente.
-3. Se "presenca" for true E temperatura <= 24°C, envie AC_OFF pois está confortável sem AC.
-4. Caso contrário, envie STANDBY (não fazer nada).
+Regras Ambientais:
+1. Se "presenca" for false por muito tempo (15m+) E você acreditar que o Ar está desperdiçando energia: A ação deve ser AC_OFF. A emoção deve ser OLED_ANGRY (A IA está irritada com o desperdício de energia).
+2. Se "presenca" for true E temperatura > 26°C: A ação deve ser AC_COOL. A emoção deve ser OLED_HAPPY ou OLED_NORMAL.
+3. Se "presenca" for false há muito tempo, e a variação da temperatura mostrar que o Ar JÁ ESTÁ desligado: A ação deve ser STANDBY. Emoção: OLED_SLEEP.
 
-IMPORTANTE: Responda APENAS com um objeto JSON no formato exato:
+IMPORTANTE: Responda obrigatoriamente APENAS E EXCLUSIVAMENTE com um JSON estruturado:
 {
-  "action": "AC_OFF" | "AC_COOL" | "STANDBY",
-  "reason": "explicação em português em uma frase curta",
-  "confidence": número de 0 a 100
+  "acao_mecanica": "AC_OFF" | "AC_COOL" | "STANDBY",
+  "expressao_oled": "OLED_ANGRY" | "OLED_HAPPY" | "OLED_SLEEP" | "OLED_NORMAL" | "OLED_SAD",
+  "motivo": "Explique em menos de 10 palavras a razão da emoção / ação escolhida.",
+  "economia_estimada": 1.50
 }`
 
 function getSupabase() {
@@ -40,17 +40,17 @@ export async function POST(request: Request) {
 
   const supabase = getSupabase()
 
-  // 1. Fetch last 20 telemetry readings
+  // 1. Puxa as últimas 20 telemetrias com a nova estrutura de dados (temperatura, umidade)
   const { data: readings, error: readErr } = await supabase
     .from('telemetria')
-    .select('temp, umid_ar, umid_solo, presenca, created_at')
+    .select('temperatura, umidade, umid_solo, presenca, created_at')
     .eq('mac_address', mac_address)
     .order('created_at', { ascending: false })
     .limit(20)
 
   if (readErr) return NextResponse.json({ error: readErr.message }, { status: 500 })
   if (!readings || readings.length < 3) {
-    return NextResponse.json({ action: 'STANDBY', reason: 'Dados insuficientes para a IA.', confidence: 0 })
+    return NextResponse.json({ acao_mecanica: 'STANDBY', expressao_oled: 'OLED_NORMAL', motivo: 'A.R.B.O. calibrando sensores.', economia_estimada: 0 })
   }
 
   // 2. Compute how long presence has been false
@@ -63,25 +63,24 @@ export async function POST(request: Request) {
         (new Date(latest.created_at).getTime() - new Date(firstWithPresence.created_at).getTime()) / 60000
       )
     } else {
-      minutesSincePresence = 999 // presence never seen in last 20 readings
+      minutesSincePresence = 999 
     }
   }
 
   // 3. Build prompt context
-  const tempValues = readings.slice(0, 5).map((r) => r.temp)
+  const tempValues = readings.slice(0, 5).map((r) => r.temperatura || 0)
   const tempVariation = Math.max(...tempValues) - Math.min(...tempValues)
 
   const contextMessage = `
-Últimas leituras do vaso ${mac_address}:
-- Temperatura atual: ${latest.temp}°C
-- Variação de temperatura nas últimas ${readings.length} leituras: ${tempVariation.toFixed(2)}°C
-- Presença detectada: ${latest.presenca ? 'Sim' : 'Não'}
-- Há quanto tempo sem presença: ${latest.presenca ? '0' : minutesSincePresence} minutos
-- Umidade do ar: ${latest.umid_ar}%
-- Umidade do solo: ${latest.umid_solo}%
+Últimas leituras do dispositivo ${mac_address}:
+- Temperatura atual: ${latest.temperatura}°C
+- Variação de temperatura nas últimas 5 leituras: ${tempVariation.toFixed(2)}°C
+- Presença detectada no ambiente: ${latest.presenca ? 'SIM' : 'NÃO'}
+- Há quanto tempo sem bater presença: ${latest.presenca ? '0' : minutesSincePresence} minutos
+- Umidade do ar: ${latest.umidade}%
 `.trim()
 
-  // 4. Call Gemini 1.5 Flash
+  // 4. API Request to Gemini
   const geminiResponse = await fetch(GEMINI_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -93,7 +92,8 @@ export async function POST(request: Request) {
       ],
       generationConfig: {
         temperature: 0.1,
-        maxOutputTokens: 200,
+        maxOutputTokens: 300,
+        responseMimeType: "application/json"
       },
     }),
   })
@@ -106,62 +106,47 @@ export async function POST(request: Request) {
   const geminiData = await geminiResponse.json()
   const rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
 
-  // 5. Parse JSON from Gemini response (strip markdown fences if present)
-  let decision: { action: string; reason: string; confidence: number }
+  // 5. Extração e Parse do Payload JSON
+  let decision: { acao_mecanica: string; expressao_oled: string; motivo: string; economia_estimada: number }
   try {
     const clean = rawText.replace(/```json?/g, '').replace(/```/g, '').trim()
     decision = JSON.parse(clean)
-  } catch {
-    return NextResponse.json({ error: 'Gemini retornou resposta inválida.', raw: rawText }, { status: 500 })
+  } catch (err) {
+    console.error("Falha no Parse do Gemini", rawText)
+    return NextResponse.json({ error: 'Quebra no formato JSON da IA', raw: rawText }, { status: 500 })
   }
 
-  const validActions = ['AC_OFF', 'AC_COOL', 'STANDBY']
-  if (!validActions.includes(decision.action)) {
-    decision.action = 'STANDBY'
-  }
+  // Sanitize defaults
+  if (!decision.acao_mecanica) decision.acao_mecanica = 'STANDBY'
+  if (!decision.expressao_oled) decision.expressao_oled = 'OLED_NORMAL'
 
-  // 6. Save to ai_decisions
-  await supabase.from('ai_decisions').insert({
+  const orgaoIdFetch = await supabase.from('dispositivos').select('org_id').eq('mac_address', mac_address).single()
+  const org_id = orgaoIdFetch.data?.org_id || null
+
+  // 6. Grava log para o painel Front-End (Tabela `ai_logs`)
+  await supabase.from('ai_logs').insert({
+    org_id,
     mac_address,
-    action: decision.action,
-    confidence: decision.confidence,
-    reason: `[Gemini] ${decision.reason}`,
-    sensor_data: {
-      temp: latest.temp,
-      presenca: latest.presenca,
-      minutes_without_presence: minutesSincePresence,
-      temp_variation: tempVariation,
-    },
-    weather_data: null,
+    mensagem: `[Decisão A.R.B.O] ${decision.motivo}. Ação: ${decision.acao_mecanica} & ${decision.expressao_oled}`,
+    estado_anterior: { temperatura: latest.temperatura, presenca: latest.presenca },
+    novo_estado: { acao_mecanica: decision.acao_mecanica, expressao_oled: decision.expressao_oled },
+    economia_estimada: decision.economia_estimada || 0.00
   })
 
-  // 7. If action is not STANDBY, fetch IR code and queue command
-  if (decision.action !== 'STANDBY') {
-    const { data: irCmd } = await supabase
-      .from('comandos_raw')
-      .select('codigo_ir, nome_comando')
-      .eq('mac_address', mac_address)
-      .eq('nome_comando', decision.action)
-      .eq('validado', true)
-      .maybeSingle()
-
+  // 7. Salva o Payload direto em `device_commands` estruturado para a Placa ESP32
+  if (decision.acao_mecanica !== 'STANDBY' || decision.expressao_oled) {
     await supabase.from('device_commands').insert({
+      org_id,
       mac_address,
-      command: decision.action,
+      command: "AI_DECISION",
       payload: {
-        reason: decision.reason,
-        confidence: decision.confidence,
-        ir_code: irCmd?.codigo_ir ?? null,
-        source: 'GEMINI',
+        acao_mecanica: decision.acao_mecanica,
+        expressao_oled: decision.expressao_oled,
+        motivo: decision.motivo
       },
       status: 'PENDING',
     })
   }
 
-  return NextResponse.json({
-    mac_address,
-    timestamp: new Date().toISOString(),
-    source: 'GEMINI_1.5_FLASH',
-    decision,
-  })
+  return NextResponse.json({ ...decision, timestamp: new Date().toISOString() })
 }
