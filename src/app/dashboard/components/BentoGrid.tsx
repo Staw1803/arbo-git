@@ -69,7 +69,7 @@ export function BentoGrid({ data }: { data: SensorProps | null }) {
             <Card className="h-full rounded-none border border-zinc-800 bg-black hover:border-zinc-600 transition-colors duration-300 shadow-none overflow-hidden relative">
                 <div className="absolute top-0 left-0 right-0 h-[1px] bg-zinc-600/30" />
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-xs font-mono tracking-widest text-zinc-500">OCUPAÇÃO</CardTitle>
+                    <CardTitle className="text-xs font-mono tracking-widest text-zinc-500">SENSOR DE PRESENÇA</CardTitle>
                     <Activity className="h-4 w-4 text-zinc-400" strokeWidth={1.2} />
                 </CardHeader>
                 <CardContent>

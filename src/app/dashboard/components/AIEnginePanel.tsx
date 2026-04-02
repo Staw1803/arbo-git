@@ -7,17 +7,11 @@ import { createClient } from "@/utils/supabase/client"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
-interface AuditDecision {
+interface AILog {
   id: string
   created_at: string
-  action: string
-  confidence: number
-}
-
-const ACTION_LABEL: Record<string, string> = {
-  STANDBY: "Em Standby",
-  AC_OFF: "AC Desligado",
-  AC_COOL: "Resfriando",
+  mensagem: string
+  economia_estimada: number
 }
 
 const ACTION_ICON: Record<string, React.ReactNode> = {
@@ -28,15 +22,15 @@ const ACTION_ICON: Record<string, React.ReactNode> = {
 
 export function AIEnginePanel({ mac = "ESP-TEST-01" }: { mac?: string }) {
   const [loading, setLoading] = useState(true)
-  const [lastDecision, setLastDecision] = useState<AuditDecision | null>(null)
+  const [lastDecision, setLastDecision] = useState<AILog | null>(null)
   const [supabase] = useState(() => createClient())
 
   useEffect(() => {
     const fetchHistory = async () => {
       const { data } = await supabase
-        .from("ai_decisions")
-        .select("id, created_at, action, confidence")
-        .eq("mac_address", mac)
+        .from("ai_logs")
+        .select("id, created_at, mensagem, economia_estimada")
+        .ilike("mac_address", mac ?? '')
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle()
@@ -48,8 +42,8 @@ export function AIEnginePanel({ mac = "ESP-TEST-01" }: { mac?: string }) {
     fetchHistory()
 
     const channel = supabase
-      .channel("ai_decisions_live")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "ai_decisions" }, () => {
+      .channel("ai_logs_live")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "ai_logs" }, () => {
         fetchHistory()
       })
       .subscribe()
@@ -79,24 +73,24 @@ export function AIEnginePanel({ mac = "ESP-TEST-01" }: { mac?: string }) {
       </CardHeader>
       <CardContent>
         {lastDecision ? (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 flex items-center justify-center rounded-full bg-white text-black">
-                {ACTION_ICON[lastDecision.action] ?? <Zap className="h-5 w-5" />}
+          <div className="flex flex-col gap-4">
+            <div className="flex items-start gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
+              <div className="h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-full bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                <Power className="h-5 w-5" />
               </div>
-              <div>
-                <p className="text-sm font-bold text-white uppercase tracking-wider">
-                  {ACTION_LABEL[lastDecision.action] ?? lastDecision.action}
+              <div className="flex flex-col flex-1">
+                <p className="text-sm font-semibold text-white leading-relaxed">
+                  {lastDecision.mensagem}
                 </p>
-                <p className="text-[10px] text-neutral-500 font-mono">
-                  Última ação há {formatDistanceToNow(new Date(lastDecision.created_at), { locale: ptBR })}
-                </p>
+                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/10">
+                   <p className="text-[10px] text-neutral-400 font-mono">
+                     {formatDistanceToNow(new Date(lastDecision.created_at), { addSuffix: true, locale: ptBR })}
+                   </p>
+                   <p className="text-[11px] font-bold text-green-400 font-mono bg-green-400/10 px-2 py-0.5 rounded">
+                     ECONOMIA: R$ {Number(lastDecision.economia_estimada).toFixed(2).replace('.', ',')}
+                   </p>
+                </div>
               </div>
-            </div>
-            <div className="text-right">
-              <span className="inline-block px-2 py-1 rounded-md bg-white/10 text-[10px] font-bold text-white uppercase tracking-wider">
-                Ativo
-              </span>
             </div>
           </div>
         ) : (
