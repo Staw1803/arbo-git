@@ -45,6 +45,8 @@ export function HistoryChart({ data }: { data: TelemetryData[] }) {
     
     useEffect(() => { setMounted(true) }, [])
     if (!mounted) return null
+    if (!data || !Array.isArray(data)) return <div className="h-[380px] flex items-center justify-center text-zinc-500 font-mono text-sm">Sincronizando log...</div>
+    if (data.length === 0) return <div className="h-[380px] flex items-center justify-center text-zinc-500 font-mono text-sm">Sistema inativo. Sem leituras recentes.</div>
     
     const sortedData = [...data]
       .sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())

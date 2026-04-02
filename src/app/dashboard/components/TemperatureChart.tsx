@@ -19,6 +19,8 @@ export function TemperatureChart({ data }: { data: TelemetryData[] }) {
     }, [])
 
     if (!mounted) return null
+    if (!data || !Array.isArray(data)) return <div className="h-[400px] flex items-center justify-center text-zinc-500 font-mono text-sm">Aguardando telemetria termal...</div>
+    if (data.length === 0) return <div className="h-[400px] flex items-center justify-center text-zinc-500 font-mono text-sm">Sem dados recentes.</div>
     
     const sortedData = [...data].sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
 

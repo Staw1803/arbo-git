@@ -9,11 +9,14 @@ import { DiscoveryBanner } from './components/DiscoveryBanner'
 import { DevicesList } from './components/DevicesList'
 import { AQIAlert } from './components/AQIWidget'
 import { useDashboard } from './context'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import dynamic from 'next/dynamic'
 
-const HistoryChart = dynamic(() => import('./components/HistoryChart').then((mod) => ({ default: mod.HistoryChart })), { ssr: false })
-const TemperatureChart = dynamic(() => import('./components/TemperatureChart').then((mod) => ({ default: mod.TemperatureChart })), { ssr: false })
-const HumidityChart = dynamic(() => import('./components/HumidityChart').then((mod) => ({ default: mod.HumidityChart })), { ssr: false })
+const ChartFallback = () => <div className="w-full min-h-[400px] h-[400px] flex items-center justify-center bg-neutral-900 border border-neutral-800 animate-pulse rounded-xl text-neutral-500 font-mono text-sm">Validando matriz de dados...</div>
+
+const HistoryChart = dynamic(() => import('./components/HistoryChart').then((mod) => ({ default: mod.HistoryChart })), { ssr: false, loading: ChartFallback })
+const TemperatureChart = dynamic(() => import('./components/TemperatureChart').then((mod) => ({ default: mod.TemperatureChart })), { ssr: false, loading: ChartFallback })
+const HumidityChart = dynamic(() => import('./components/HumidityChart').then((mod) => ({ default: mod.HumidityChart })), { ssr: false, loading: ChartFallback })
 const AIEnginePanel = dynamic(() => import('./components/AIEnginePanel').then((mod) => ({ default: mod.AIEnginePanel })), { ssr: false })
 const ACWizard = dynamic(() => import('./components/ACWizard').then((mod) => ({ default: mod.ACWizard })), { ssr: false })
 
@@ -125,22 +128,30 @@ export default function DashboardClient({ initialData }: { initialData: Telemetr
              <BentoGrid data={latestData} />
              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                  <div className="lg:col-span-2">
-                   <HistoryChart data={data} />
+                   <ErrorBoundary fallbackMessage="Erro ao renderizar o Gráfico de Telemetria">
+                     <HistoryChart data={data} />
+                   </ErrorBoundary>
                  </div>
-                 <AuditTable data={data} />
+                 <ErrorBoundary fallbackMessage="Erro ao renderizar Tabela de Auditoria">
+                   <AuditTable data={data} />
+                 </ErrorBoundary>
              </div>
            </div>
          )}
 
          {activeTab === 'temperature' && (
            <div className="space-y-6 transition-all duration-300 opacity-100">
-             <TemperatureChart data={data} />
+             <ErrorBoundary fallbackMessage="Erro ao renderizar o Gráfico Térmico">
+               <TemperatureChart data={data} />
+             </ErrorBoundary>
            </div>
          )}
 
          {activeTab === 'humidity' && (
            <div className="space-y-6 transition-all duration-300 opacity-100">
-             <HumidityChart data={data} />
+             <ErrorBoundary fallbackMessage="Erro ao renderizar o Gráfico Hídrico">
+               <HumidityChart data={data} />
+             </ErrorBoundary>
            </div>
          )}
 
