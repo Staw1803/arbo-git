@@ -32,6 +32,7 @@ export default function DashboardClient({ initialData }: { initialData: Telemetr
   // Mantemos os últimos 50 itens
   const [data, setData] = useState<TelemetryData[]>(initialData || [])
   const [supabase] = useState(() => createClient())
+  const [debugLog, setDebugLog] = useState<string>("Wait...")
 
   useEffect(() => {
     // Busca inicial cliente-side
@@ -66,8 +67,10 @@ export default function DashboardClient({ initialData }: { initialData: Telemetr
           table: 'telemetria',
         },
         (payload) => {
+          setDebugLog("Event received: " + payload.eventType)
           const newData = payload.new as any;
-          if (newData.mac_address) {
+          if (newData && newData.mac_address) {
+            setDebugLog("Parsing safeData for MAC: " + newData.mac_address)
             const safeData: TelemetryData = {
                 ...newData,
                 temperatura: Number(newData.temperatura) || 0,
@@ -75,10 +78,13 @@ export default function DashboardClient({ initialData }: { initialData: Telemetr
                 umid_solo: Number(newData.umid_solo) || 0,
             };
             setData((current) => [safeData, ...current].slice(0, 50))
+          } else {
+            setDebugLog("Rejected payload matching due to lack of MAC: " + JSON.stringify(newData).substring(0, 50))
           }
         }
       )
       .subscribe((status, err) => {
+        setDebugLog("Socket Status: " + status + (err ? " ERRO: " + err.message : ""))
         console.log("Realtime connection status:", status);
         if (err) console.error("Realtime error:", err);
       })
@@ -107,6 +113,10 @@ export default function DashboardClient({ initialData }: { initialData: Telemetr
           {latestData && (
               <StatusBadge latestCreatedAt={latestData.created_at} />
           )}
+       </div>
+       
+       <div className="bg-neutral-900 border border-neutral-700 rounded-md p-2 text-[10px] font-mono text-neutral-400">
+         [REALTIME DEBUGGER]: {debugLog}
        </div>
 
        <div className="transition-all duration-300">
