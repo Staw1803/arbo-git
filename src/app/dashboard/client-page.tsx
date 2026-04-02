@@ -55,9 +55,9 @@ export default function DashboardClient({ initialData }: { initialData: Telemetr
     
     fetchInitialData()
 
-    // Setup Supabase Realtime subscription
+    // Setup Supabase Realtime subscription with a unique channel name to bypass React 18 StrictMode unmount/remount bugs
     const channel = supabase
-      .channel('telemetria_changes')
+      .channel(`telemetria_changes_${Date.now()}`)
       .on(
         'postgres_changes',
         {
@@ -78,7 +78,10 @@ export default function DashboardClient({ initialData }: { initialData: Telemetr
           }
         }
       )
-      .subscribe()
+      .subscribe((status, err) => {
+        console.log("Realtime connection status:", status);
+        if (err) console.error("Realtime error:", err);
+      })
 
     return () => {
       supabase.removeChannel(channel)
