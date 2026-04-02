@@ -39,7 +39,7 @@ export function HumidityChart({ data }: { data: TelemetryData[] }) {
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="h-[400px] w-full mt-4">
+                <div className="w-full mt-4 min-h-[400px]" style={{ height: 400 }}>
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={formattedData} margin={{ top: 10, right: 0, bottom: 0, left: -20 }}>
                             <defs>

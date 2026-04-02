@@ -65,7 +65,7 @@ export function HistoryChart({ data }: { data: TelemetryData[] }) {
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="h-[380px] w-full mt-2">
+                <div className="w-full mt-2 min-h-[380px]" style={{ height: 380 }}>
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={formattedData} margin={{ top: 5, right: 40, bottom: 5, left: 0 }}>
                             <XAxis 
