@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
     const aiOptions = process.env.GEMINI_API_KEY ? { apiKey: process.env.GEMINI_API_KEY } : {}
     const ai = new GoogleGenAI(aiOptions)
 
+    console.log(`\n[OCR] PASSO 1: Lendo arquivo recebido -> Nome: "${file.name}" | Tipo: ${file.type} | Tamanho: ${file.size} bytes`);
     const buffer = await file.arrayBuffer()
     const nodeBuffer = Buffer.from(buffer)
 
@@ -32,6 +33,7 @@ export async function POST(req: NextRequest) {
 
     const base64Data = nodeBuffer.toString("base64")
     const mimeType = file.type || "application/pdf"
+    console.log(`[OCR] PASSO 2: Conversão de Arquivo Finalizada -> String Base64 Tamanho: ${base64Data.length} | MimeType Final Tratado: "${mimeType}"`);
     
     let instructions = `
     Analise esta fatura de energia e extraia os seguintes dados em formato estrito JSON sem markdown:
@@ -45,25 +47,56 @@ export async function POST(req: NextRequest) {
     Forneça apenas o JSON válido e nada mais.
     `
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: [
-        {
-           role: 'user',
-           parts: [
-              {
-                 inlineData: {
-                    data: base64Data,
-                    mimeType: mimeType
-                 }
-              },
-              { text: instructions }
-           ]
-        }
-      ]
-    });
+    let response;
+    try {
+      response = await ai.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: [
+          {
+             role: 'user',
+             parts: [
+                {
+                   inlineData: {
+                      data: base64Data,
+                      mimeType: mimeType
+                   }
+                },
+                { text: instructions }
+             ]
+          }
+        ]
+      });
+    } catch (apiError: any) {
+      console.error("=============== GEMINI API EXCEPTION ===============");
+      console.error("ErrorMessage:", apiError.message);
+      console.error("ErrorName:", apiError.name);
+      console.error("ErrorDetails:", JSON.stringify(apiError, null, 2));
+      console.error("File Info:", {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          mimeTypeUsed: mimeType,
+          base64Length: base64Data.length
+      });
+      console.error("====================================================");
+      
+      const isRateLimit = apiError.status === 429 || (apiError.message && apiError.message.includes("429")) || (apiError.message && apiError.message.includes("quota"));
+      
+      if (isRateLimit) {
+        return NextResponse.json(
+          { error: "Cota da API excedida", retryAfter: 32 },
+          { status: 429 }
+        );
+      }
+
+      return NextResponse.json(
+        { error: `Erro na leitura IA (Google). Veja os logs do servidor. Detalhe: ${apiError.message}` },
+        { status: 502 }
+      );
+    }
 
     let jsonString = response.text || ""
+    console.log(`\n[OCR] PASSO 3: Resposta Bruta da IA Gemini:\n${jsonString}\n`);
     jsonString = jsonString.replace(/```json/g, "").replace(/```/g, "").trim()
     
     let parsedData

@@ -17,6 +17,7 @@ export default function UploadBatchPage() {
   const [results, setResults] = useState<ParsedBill[]>([])
   const [aggregateResult, setAggregateResult] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
+  const [waitMessage, setWaitMessage] = useState<string | null>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -45,35 +46,63 @@ export default function UploadBatchPage() {
     // 1. Process one file at a time (Queue)
     for (let i = 0; i < files.length; i++) {
        setProcessingIndex(i)
-       try {
-         const formData = new FormData()
-         formData.append("file", files[i])
+       let success = false;
+       let attempts = 0;
 
-         const response = await fetch("/api/ocr", {
-           method: "POST",
-           body: formData,
-         })
+       // 5 to 8 seconds delay between invoices (not the first one)
+       if (i > 0) {
+         setWaitMessage("Respeitando rate limit (Pausa de segurança)...");
+         const delaySeconds = Math.floor(Math.random() * 4) + 5;
+         await new Promise(r => setTimeout(r, delaySeconds * 1000));
+         setWaitMessage(null);
+       }
 
-         let data;
-         const contentType = response.headers.get("content-type");
-         if (contentType && contentType.includes("application/json")) {
-           data = await response.json();
-         } else {
-           const text = await response.text();
-           if (response.status === 413) throw new Error("Arquivo muito grande (Limite 4MB).")
-           throw new Error(`Erro no servidor (${response.status})`)
+       while (!success) {
+         try {
+           const formData = new FormData()
+           formData.append("file", files[i])
+
+           const response = await fetch("/api/ocr", {
+             method: "POST",
+             body: formData,
+           })
+
+           if (response.status === 429) {
+             attempts++;
+             if (attempts > 3) throw new Error("Cota excedida repetidas vezes. Tente novamente mais tarde.");
+             
+             let secondsLeft = 30;
+             while (secondsLeft > 0) {
+                setWaitMessage(`Aguardando cota da API... (tentando novamente em ${secondsLeft} segundos)`);
+                await new Promise(r => setTimeout(r, 1000));
+                secondsLeft--;
+             }
+             setWaitMessage(null);
+             continue; // Retry Same File
+           }
+
+           let data;
+           const contentType = response.headers.get("content-type");
+           if (contentType && contentType.includes("application/json")) {
+             data = await response.json();
+           } else {
+             const text = await response.text();
+             if (response.status === 413) throw new Error("Arquivo muito grande (Limite 4MB).")
+             throw new Error(`Erro no servidor (${response.status})`)
+           }
+
+           if (!response.ok) throw new Error(data?.error || "Erro ao processar a fatura.")
+
+           extractedData.push(data.parsedData)
+           setResults(prev => [...prev, data.parsedData])
+           success = true;
+
+         } catch (err: any) {
+           console.error(err)
+           setError(`Falha ao processar o arquivo "${files[i].name}": ${err.message}`)
+           setProcessingIndex(-1)
+           return // Stop entirely on error
          }
-
-         if (!response.ok) throw new Error(data?.error || "Erro ao processar a fatura.")
-
-         extractedData.push(data.parsedData)
-         setResults(prev => [...prev, data.parsedData])
-
-       } catch (err: any) {
-         console.error(err)
-         setError(`Falha ao processar o arquivo "${files[i].name}": ${err.message}`)
-         setProcessingIndex(-1)
-         return // Stop entirely on error
        }
     }
 
@@ -149,12 +178,17 @@ export default function UploadBatchPage() {
                 </div>
              )}
 
-             {/* Progress Info */}
+              {/* Progress Info */}
              {isProcessing && (
                 <div className="pt-4 border-t border-zinc-800">
-                    <div className="flex justify-between text-xs font-mono text-zinc-400 mb-2">
-                       <span>{processingIndex === -2 ? "Calculando Meta Dinâmica..." : `Analisando arquivo ${processingIndex + 1} de ${files.length}`}</span>
-                       <span>{Math.round(progressPct)}%</span>
+                    <div className="flex flex-col gap-1 mb-2">
+                       <div className="flex justify-between text-xs font-mono text-zinc-400">
+                         <span>{processingIndex === -2 ? "Calculando Meta Dinâmica..." : `Analisando arquivo ${processingIndex + 1} de ${files.length}`}</span>
+                         <span>{Math.round(progressPct)}%</span>
+                       </div>
+                       {waitMessage && (
+                         <span className="text-orange-400 text-[10px] font-mono tracking-widest uppercase animate-pulse">{waitMessage}</span>
+                       )}
                     </div>
                     <div className="w-full h-1 bg-zinc-800 rounded-full overflow-hidden">
                        <div className="h-full bg-white transition-all duration-300" style={{ width: `${progressPct}%` }} />
