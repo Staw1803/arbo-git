@@ -75,6 +75,7 @@ export function ACWizard({ mac }: { mac?: string }) {
   const [currentStep, setCurrentStep] = useState(0)
   const [captured, setCaptured] = useState<Record<string, CapturedCommand>>({})
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [successToast, setSuccessToast] = useState<string | null>(null)
   const [waitingCapture, setWaitingCapture] = useState(false)
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
@@ -104,14 +105,20 @@ export function ACWizard({ mac }: { mac?: string }) {
   // ── Realtime subscription for comandos_raw ────────────────────────────────
   const subscribeToRawCommands = () => {
     if (channelRef.current) supabase.removeChannel(channelRef.current)
+    if (!mac) return;
 
     channelRef.current = supabase
-      .channel('comandos_raw_live')
+      .channel(`comandos_raw_live_${mac}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'comandos_raw' },
+        { 
+           event: 'INSERT', 
+           schema: 'public', 
+           table: 'comandos_raw',
+           filter: `mac_address=eq.${mac}` 
+        },
         (payload: any) => {
-          const newRow = payload.new as CapturedCommand
+          const newRow = payload.new;
           if (!newRow?.nome_comando) return
 
           const irLen = (newRow.codigo_ir ?? '').length
@@ -121,6 +128,7 @@ export function ACWizard({ mac }: { mac?: string }) {
             return
           }
 
+          // Trigger Success States
           setErrorMsg(null)
           setWaitingCapture(false)
           setCaptured((prev) => ({
@@ -128,7 +136,16 @@ export function ACWizard({ mac }: { mac?: string }) {
             [newRow.nome_comando]: { ...newRow, validado: true },
           }))
 
-          // Advance to next step
+          // Show Toast Feedback
+          const stepMatch = STEPS.find(s => s.key === newRow.nome_comando);
+          const cmdName = stepMatch ? stepMatch.label : newRow.nome_comando;
+          setSuccessToast(`Sinal de ${cmdName} capturado com sucesso! ✅`);
+          
+          setTimeout(() => {
+             setSuccessToast(null);
+          }, 4000);
+
+          // Advance to next step automatically
           setCurrentStep((prev) => {
             const next = prev + 1
             if (next >= STEPS.length) {
@@ -138,7 +155,9 @@ export function ACWizard({ mac }: { mac?: string }) {
           })
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+         console.log("Supabase Realtime Channel Status:", status);
+      })
   }
 
   // ── Finish wizard ─────────────────────────────────────────────────────────
@@ -262,7 +281,21 @@ export function ACWizard({ mac }: { mac?: string }) {
   const activeStep = STEPS[currentStep]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {successToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.9 }}
+            className="fixed top-8 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-black px-6 py-3 rounded-full font-bold shadow-[0_0_20px_rgba(34,197,94,0.4)] flex items-center gap-2"
+          >
+            {successToast}
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Progress bar */}
       <Card className="rounded-2xl border border-neutral-800 bg-black/40 backdrop-blur-md shadow-2xl overflow-hidden">
         <CardContent className="pt-5 pb-5">
