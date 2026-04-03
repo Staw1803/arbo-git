@@ -121,6 +121,16 @@ export function ACWizard({ mac }: { mac?: string }) {
           const newRow = payload.new;
           if (!newRow?.nome_comando) return
 
+          // 🛠 Sincronização Hardware/UI: Se a placa enviar "Passo 0", converte para a chave "AC_OFF" automaticamente
+          let safeCommandName = newRow.nome_comando;
+          if (safeCommandName.startsWith('Passo ')) {
+             const boardIndex = parseInt(safeCommandName.replace('Passo ', ''), 10);
+             if (!isNaN(boardIndex) && boardIndex >= 0 && boardIndex < STEPS.length) {
+                safeCommandName = STEPS[boardIndex].key;
+             }
+          }
+          newRow.nome_comando = safeCommandName;
+
           const irLen = (newRow.codigo_ir ?? '').length
           if (irLen < MIN_IR_CODE_LENGTH) {
             setErrorMsg(`⚠️ Código IR recebido muito curto (${irLen} chars) — possível ruído. Tente novamente.`)
