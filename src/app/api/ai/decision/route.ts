@@ -121,6 +121,41 @@ export async function GET(request: Request) {
       confidence = 82
     }
 
+    // ── 4.5. Thermostat Hysteresis & Debounce (AUMENTAR_TEMP) ──────────────────
+    if (action === 'STANDBY') {
+      const { data: lastTempCmds } = await supabase
+        .from('device_commands')
+        .select('created_at')
+        .eq('mac_address', mac_address)
+        .eq('command', 'AUMENTAR_TEMP')
+        .order('created_at', { ascending: false })
+        .limit(1)
+
+      const lastTempCmd = lastTempCmds?.[0]
+      let minSinceLastTempCmd = 999;
+      let isHeatingMode = false;
+
+      if (lastTempCmd) {
+        minSinceLastTempCmd = (new Date().getTime() - new Date(lastTempCmd.created_at).getTime()) / (1000 * 60);
+        // Se aquecemos recentemente (ex: na última hora), consideramos a zona de histerese ativa para atingir 24C
+        if (minSinceLastTempCmd < 60) {
+           isHeatingMode = true;
+        }
+      }
+
+      if (latest.temp <= 21 || (isHeatingMode && latest.temp < 24)) {
+        if (minSinceLastTempCmd >= 1.0) {
+          action = 'AUMENTAR_TEMP';
+          reason = `Temperatura de ${latest.temp}°C está abaixo do alvo (24°C). Incremento acionado.`;
+          confidence = 95;
+        } else {
+          // Debounce / Estabilização: não enviar novo comando ainda
+          reason = `Aguardando estabilização térmica do último incremento (enviado há ${Math.floor(minSinceLastTempCmd * 60)} s). Meta até 24°C.`;
+          confidence = 90;
+        }
+      }
+    }
+
     // ── 5. Save decision to ai_decisions table ─────────────────────────────────
     await supabase.from('ai_decisions').insert({
       mac_address,
