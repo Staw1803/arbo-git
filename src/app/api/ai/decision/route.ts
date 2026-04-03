@@ -143,7 +143,7 @@ export async function GET(request: Request) {
         }
       }
 
-      if (latest.temp <= 21 || (isHeatingMode && latest.temp < 24)) {
+      if (latest.temp <= 23 || (isHeatingMode && latest.temp < 24)) {
         if (minSinceLastTempCmd >= 1.0) {
           action = 'AUMENTAR_TEMP';
           reason = `Temperatura de ${latest.temp}°C está abaixo do alvo (24°C). Incremento acionado.`;
