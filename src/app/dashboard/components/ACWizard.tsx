@@ -64,7 +64,7 @@ const STEPS: StepConfig[] = [
   },
 ]
 
-const MIN_IR_CODE_LENGTH = 10   // minimum characters to consider a valid IR capture
+const MIN_IR_CODE_LENGTH = 4    // minimum characters to consider a valid IR capture (supports 24-bit codes)
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Main component
