@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 export const dynamic = 'force-dynamic'
 
 const GEMINI_API_KEY = (process.env.GEMINI_API_KEY || '').trim()
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`
 
 const SYSTEM_PROMPT = `Você é a I.A. de Gestão e UX do sistema A.R.B.O. 
 Sua missão é atuar como o juiz ambiental de uma sala comercial, decidindo autonomamente sobre o desligamento do Ar-Condicionado para gerar economia e escolher uma "emocão" para a Tela OLED inteligente.

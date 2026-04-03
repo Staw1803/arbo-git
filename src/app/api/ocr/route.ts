@@ -48,51 +48,73 @@ export async function POST(req: NextRequest) {
     `
 
     let response;
+    let currentModel = 'gemini-2.0-flash';
+    const payload = [
+      {
+         role: 'user',
+         parts: [
+            {
+               inlineData: {
+                  data: base64Data,
+                  mimeType: mimeType
+               }
+            },
+            { text: instructions }
+         ]
+      }
+    ];
+
     try {
+      console.log(`[OCR] Tentando usar o modelo Principal: "${currentModel}"`);
       response = await ai.models.generateContent({
-        model: 'gemini-1.5-flash',
-        contents: [
-          {
-             role: 'user',
-             parts: [
-                {
-                   inlineData: {
-                      data: base64Data,
-                      mimeType: mimeType
-                   }
-                },
-                { text: instructions }
-             ]
-          }
-        ]
+        model: currentModel,
+        contents: payload
       });
     } catch (apiError: any) {
-      console.error("=============== GEMINI API EXCEPTION ===============");
-      console.error("ErrorMessage:", apiError.message);
-      console.error("ErrorName:", apiError.name);
-      console.error("ErrorDetails:", JSON.stringify(apiError, null, 2));
-      console.error("File Info:", {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          mimeTypeUsed: mimeType,
-          base64Length: base64Data.length
-      });
-      console.error("====================================================");
+      console.error(`[OCR] Erro no modelo ${currentModel}:`, apiError.message);
       
-      const isRateLimit = apiError.status === 429 || (apiError.message && apiError.message.includes("429")) || (apiError.message && apiError.message.includes("quota"));
+      const is404 = apiError.status === 404 || (apiError.message && apiError.message.includes("not found"));
       
-      if (isRateLimit) {
+      if (is404) {
+        currentModel = 'gemini-1.5-flash-8b';
+        console.log(`[OCR] Acionando Fallback Inteligente -> Modelo: "${currentModel}"`);
+        try {
+          response = await ai.models.generateContent({
+            model: currentModel,
+            contents: payload
+          });
+        } catch (fallbackError: any) {
+          console.error("[OCR FALLBACK] Falha total:", fallbackError.message);
+          return NextResponse.json({ error: `Fallback IA falhou. Detalhe: ${fallbackError.message}` }, { status: 502 });
+        }
+      } else {
+        console.error("=============== GEMINI API EXCEPTION ===============");
+        console.error("ErrorMessage:", apiError.message);
+        console.error("ErrorName:", apiError.name);
+        console.error("ErrorDetails:", JSON.stringify(apiError, null, 2));
+        console.error("File Info:", {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            mimeTypeUsed: mimeType,
+            base64Length: base64Data.length
+        });
+        console.error("====================================================");
+        
+        const isRateLimit = apiError.status === 429 || (apiError.message && apiError.message.includes("429")) || (apiError.message && apiError.message.includes("quota"));
+        
+        if (isRateLimit) {
+          return NextResponse.json(
+            { error: "Cota da API excedida", retryAfter: 32 },
+            { status: 429 }
+          );
+        }
+
         return NextResponse.json(
-          { error: "Cota da API excedida", retryAfter: 32 },
-          { status: 429 }
+          { error: `Erro na leitura IA (Google). Veja os logs do servidor. Detalhe: ${apiError.message}` },
+          { status: 502 }
         );
       }
-
-      return NextResponse.json(
-        { error: `Erro na leitura IA (Google). Veja os logs do servidor. Detalhe: ${apiError.message}` },
-        { status: 502 }
-      );
     }
 
     let jsonString = response.text || ""
