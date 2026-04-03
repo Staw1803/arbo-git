@@ -160,6 +160,7 @@ export function ACWizard({ mac }: { mac?: string }) {
             const next = prev + 1
             if (next >= STEPS.length) {
               finishWizard()
+              return prev // Safe hold: prev prevents evaluating STEPS[4] which is undefined
             }
             return next
           })

@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
   const { error } = await supabase
     .from('dispositivos')
-    .update({ status: 'ACTIVE', ac_configured: true })
+    .update({ status: 'ACTIVE', modo: 'NORMAL', ac_configured: true })
     .eq('mac_address', mac_address)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
