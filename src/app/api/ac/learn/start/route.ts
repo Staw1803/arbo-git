@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   const { error: upsertErr } = await supabase
     .from('dispositivos')
     .upsert(
-      { mac_address, nome: nome ?? 'Vaso A.R.B.O.', sala: sala ?? 'Sala Principal', status: 'LEARNING', ac_configured: false },
+      { mac_address, nome: nome ?? 'Vaso A.R.B.O.', sala: sala ?? 'Sala Principal', status: 'LEARNING', modo: 'MAPEAMENTO', ac_configured: false },
       { onConflict: 'mac_address' }
     )
 

@@ -163,7 +163,7 @@ export default function DashboardClient({ initialData }: { initialData: Telemetr
 
           {activeTab === 'ac' && (
            <div className="space-y-6 transition-all duration-300 opacity-100">
-             <ACWizard mac={"placa_amigo_ir"} />
+             <ACWizard mac={"CC:DB:A7:92:25:64"} />
            </div>
           )}
 
