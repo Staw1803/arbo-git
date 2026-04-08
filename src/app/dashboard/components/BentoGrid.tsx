@@ -11,6 +11,7 @@ interface SensorProps {
     temperatura: number;
     umidade: number;
     presenca: boolean;
+    isOccupied?: boolean;
 }
 
 function MetricBar({ value, max, color }: { value: number, max: number, color: string }) {
@@ -74,12 +75,12 @@ export function BentoGrid({ data }: { data: SensorProps | null }) {
                 </CardHeader>
                 <CardContent>
                    <div className="flex items-center gap-3">
-                      <div className={`h-3 w-3 flex-shrink-0 rounded-none ${data.presenca ? 'bg-white' : 'bg-zinc-700'}`} />
-                      <div className="text-3xl font-black text-white tracking-tighter">{data.presenca ? 'ATIVO' : 'LIVRE'}</div>
+                      <div className={`h-3 w-3 flex-shrink-0 rounded-none ${data.isOccupied ? 'bg-white' : 'bg-zinc-700'}`} />
+                      <div className="text-3xl font-black text-white tracking-tighter">{data.isOccupied ? 'SALA OCUPADA' : 'VAZIA'}</div>
                    </div>
                    <p className="text-xs text-zinc-500 mt-2 font-mono">SENSOR PIR</p>
                    <div className="w-full h-[1px] bg-zinc-800 mt-3">
-                     <div className={`h-full transition-all duration-700 ${data.presenca ? 'bg-white/60 w-full' : 'w-0'}`} />
+                     <div className={`h-full transition-all duration-700 ${data.isOccupied ? 'bg-white/60 w-full' : 'w-0'}`} />
                    </div>
                 </CardContent>
             </Card>

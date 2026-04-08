@@ -394,7 +394,7 @@ export function ACWizard({ mac }: { mac?: string }) {
                   className="w-full py-3 px-6 rounded-xl font-bold text-sm text-black bg-white hover:bg-neutral-200 transition-all duration-200 border border-transparent flex items-center justify-center gap-2"
                 >
                   <RadioTower className="h-4 w-4" />
-                  Já pressionei o botão: {activeStep.label}
+                  Iniciar: {activeStep.label}
                 </button>
               )}
             </CardContent>
