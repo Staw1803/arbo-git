@@ -103,8 +103,7 @@ export default function DashboardClient({ initialData }: { initialData: Telemetr
        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h2 className="text-3xl font-bold tracking-tight">
             {activeTab === 'overview' && 'Visão Geral'}
-            {activeTab === 'temperature' && 'Temperatura'}
-            {activeTab === 'humidity' && 'Umidade'}
+            {activeTab === 'temperature' && 'Clima e Ambiente'}
             {activeTab === 'ai' && 'Central A.I.'}
             {activeTab === 'ac' && 'Climatização AC'}
             {activeTab === 'devices' && 'Dispositivos (Frota)'}
@@ -132,15 +131,10 @@ export default function DashboardClient({ initialData }: { initialData: Telemetr
          )}
 
          {activeTab === 'temperature' && (
-           <div className="space-y-6 transition-all duration-300 opacity-100">
+           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 transition-all duration-300 opacity-100">
              <ErrorBoundary fallbackMessage="Erro ao renderizar o Gráfico Térmico">
                <TemperatureChart data={data} />
              </ErrorBoundary>
-           </div>
-         )}
-
-         {activeTab === 'humidity' && (
-           <div className="space-y-6 transition-all duration-300 opacity-100">
              <ErrorBoundary fallbackMessage="Erro ao renderizar o Gráfico Hídrico">
                <HumidityChart data={data} />
              </ErrorBoundary>

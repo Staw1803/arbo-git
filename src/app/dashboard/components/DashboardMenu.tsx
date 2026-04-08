@@ -54,15 +54,9 @@ export function DashboardMenu() {
               className={`flex w-full items-center px-4 py-2 text-sm transition-colors group cursor-pointer ${activeTab === 'temperature' ? 'text-white bg-[#2a2a2a]' : 'text-gray-300 hover:bg-[#2a2a2a] hover:text-white'}`}
             >
               <Thermometer className={`mr-3 h-4 w-4 transition-colors ${activeTab === 'temperature' ? 'text-white' : 'text-gray-500 group-hover:text-white'}`} />
-              Temperatura
+              Temp & Umidade
             </button>
-            <button
-              onClick={() => { setActiveTab('humidity'); setIsOpen(false); }}
-              className={`flex w-full items-center px-4 py-2 text-sm transition-colors group cursor-pointer ${activeTab === 'humidity' ? 'text-white bg-[#2a2a2a]' : 'text-gray-300 hover:bg-[#2a2a2a] hover:text-white'}`}
-            >
-              <Waves className={`mr-3 h-4 w-4 transition-colors ${activeTab === 'humidity' ? 'text-white' : 'text-gray-500 group-hover:text-white'}`} />
-              Umidade
-            </button>
+
             <button
               onClick={() => { setActiveTab('ai'); setIsOpen(false); }}
               className={`flex w-full items-center px-4 py-2 text-sm transition-colors group cursor-pointer ${activeTab === 'ai' ? 'text-green-400 bg-[#2a2a2a]' : 'text-gray-300 hover:bg-[#2a2a2a] hover:text-green-400'}`}
