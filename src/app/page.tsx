@@ -9,32 +9,46 @@ export default function Home() {
 
       {/* Hero */}
       <section className="flex flex-col items-center justify-center min-h-screen p-8 lg:p-24 relative overflow-hidden bg-black">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-zinc-900 via-black to-black opacity-50" />
-        <div className="flex flex-col items-center gap-10 text-center max-w-4xl mx-auto relative z-10">
-          <Logo className="w-52 h-52 text-white" />
-          <div className="space-y-4">
-            <p className="text-xs font-mono tracking-[0.4em] text-gray-500 uppercase">Plataforma de Governança Ambiental</p>
-            <h1 className="text-4xl lg:text-6xl font-black tracking-tighter text-white leading-tight">
-              Inteligência Ambiental.
+        {/* Background Image Setup */}
+        <div 
+          className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-40 mix-blend-luminosity scale-105 duration-1000 animate-in fade-in zoom-in"
+          style={{ backgroundImage: `url('/bg-arbo.jpg')` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black z-0" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-zinc-900/20 via-black/80 to-black z-0" />
+        
+        <div className="flex flex-col items-center gap-10 text-center max-w-4xl mx-auto relative z-10 mt-10">
+          <Logo className="w-48 h-48 text-white drop-shadow-2xl" />
+          <div className="space-y-6">
+            <p className="text-xs font-mono tracking-[0.4em] text-emerald-400 uppercase drop-shadow-md">
+              Bem-vindo ao Projeto A.R.B.O.
+            </p>
+            <h1 className="text-4xl lg:text-6xl font-black tracking-tighter text-white leading-tight drop-shadow-xl">
+              Automação, Robótica <br className="hidden lg:block"/>e Biofilia.
             </h1>
-            <p className="text-lg text-zinc-400 max-w-2xl leading-relaxed mx-auto">
-              Telemetria autônoma e governança de dados para a climatização corporativa.
+            <p className="text-lg md:text-xl text-zinc-300 max-w-2xl leading-relaxed mx-auto drop-shadow-sm">
+              Conheça a plataforma que une tecnologia IoT e inteligência artificial para o controle autônomo da climatização corporativa — trazendo redução de custos, sustentabilidade e gestão baseada em dados reais.
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
+          <div className="flex flex-col sm:flex-row gap-5 items-center mt-4 w-full sm:w-auto">
+            <a 
+              href="https://wa.me/5592981233982" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex w-full sm:w-auto items-center justify-center gap-3 px-8 py-4 text-sm font-bold tracking-widest text-black bg-emerald-400 hover:bg-emerald-300 shadow-[0_0_30px_rgba(52,211,153,0.3)] hover:shadow-[0_0_50px_rgba(52,211,153,0.5)] transition-all duration-500 rounded-full"
+            >
+              FALAR COM ESPECIALISTA
+              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </a>
             <Link
               href="/dashboard"
-              className="group inline-flex items-center gap-2 px-8 py-4 text-sm font-medium tracking-widest text-black bg-white hover:bg-gray-200 transition-all duration-300"
+              className="group flex w-full sm:w-auto items-center justify-center gap-2 px-8 py-4 text-sm font-medium tracking-widest text-white border border-white/20 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-white/40 transition-all duration-300 rounded-full"
             >
               ACESSAR PORTAL
-              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <a href="#roi" className="px-8 py-4 text-sm font-medium tracking-widest text-gray-400 border border-gray-700 hover:border-white hover:text-white transition-all duration-300">
-              VER RESULTADOS
-            </a>
           </div>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black to-transparent z-0" />
       </section>
 
       {/* Stats Bar */}
