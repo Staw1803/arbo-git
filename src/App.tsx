@@ -493,8 +493,8 @@ function App() {
           payment_method_id: 'pix',
           payer: {
             email: emailVal,
-            first_name: emailVal.split('@')[0],
-            last_name: 'User'
+            first_name: emailVal.split('@')[0] || 'Cliente',
+            last_name: 'Predix'
           }
         })
       });
@@ -512,10 +512,14 @@ function App() {
         });
         setToast({ message: 'PIX gerado via Mercado Pago!', type: 'success' });
       } else {
-        throw new Error(data.message || 'Falha ao processar Pix com o gateway');
+        // Extract detailed error description from Mercado Pago response
+        console.error('Mercado Pago API error response:', data);
+        const errorDetail = data.message || (data.cause && data.cause[0]?.description) || 'Falha na validação do pagamento';
+        throw new Error(errorDetail);
       }
     } catch (err: any) {
-      console.warn('Proxy fail, generating sandbox fallback:', err.message);
+      console.error('Checkout network/API error:', err);
+      // Fallback for offline testing
       setCheckoutPackage({
         name: pkg.name,
         coins: pkg.coins,
@@ -523,7 +527,10 @@ function App() {
         qrCode: `00020101021226870014br.gov.bcb.pix2565https://qr.mercadopago.com/pix/v1/mp-predix-${pkg.price}-${Date.now()}5204000053039865405${pkg.price.toFixed(2)}5802BR5910Predix_Inc6009Sao_Paulo62070503***6304CA12`,
         qrCodeBase64: ''
       });
-      setToast({ message: 'Conexao falhou. Carregando Pix de contingência.', type: 'error' });
+      setToast({ 
+        message: `Checkout Error: ${err.message || 'Falha de conexão com o Mercado Pago.'}`, 
+        type: 'error' 
+      });
     } finally {
       setLoadingPix(false);
     }
