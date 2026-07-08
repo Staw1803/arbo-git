@@ -35,10 +35,10 @@ function App() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Store & Checkout States
-  const [checkoutPackage, setCheckoutPackage] = useState<{ name: string; coins: number; price: number; qrCode: string; qrCodeBase64: string } | null>(null);
+  const [checkoutPackage, setCheckoutPackage] = useState<{ name: string; coins: number; price: number; qrCode: string; qrCodeBase64: string; txid: string } | null>(null);
   const [loadingPix, setLoadingPix] = useState<boolean>(false);
-  const [confirmingPayment, setConfirmingPayment] = useState<boolean>(false);
   const [copiedPix, setCopiedPix] = useState<boolean>(false);
+  const [timeLeft, setTimeLeft] = useState<number>(900); // 15 minutes (900 seconds)
 
   // Profile Edit States
   const [isEditingProfile, setIsEditingProfile] = useState<boolean>(false);
@@ -244,8 +244,10 @@ function App() {
           coins: pkg.coins,
           price: pkg.price,
           qrCode: data.pixCopiaECola,
-          qrCodeBase64: data.qrCodeImage
+          qrCodeBase64: data.qrCodeImage,
+          txid: data.txid
         });
+        setTimeLeft(900); // Reset countdown to 15 mins
         setToast({ message: 'PIX gerado via Efí Bank!', type: 'success' });
       } else {
         throw new Error(data.error || 'Falha ao processar pagamento com a Efí');
@@ -268,34 +270,65 @@ function App() {
     setTimeout(() => setCopiedPix(false), 2000);
   };
 
-  const handleConfirmStorePayment = async () => {
-    if (!checkoutPackage) return;
-    setConfirmingPayment(true);
-
-    try {
-      const addedCoins = checkoutPackage.coins;
-      const finalBalance = balance + addedCoins;
-
-      if (!isOfflineSandbox && session?.uid) {
-        const userRef = doc(db, 'users', session.uid);
-        await updateDoc(userRef, { 
-          credits: finalBalance
-        });
-        setProfile((prev: any) => ({ ...prev, credits: finalBalance }));
-      }
-      
-      setBalance(finalBalance);
-      setToast({
-        message: `Pagamento Pix confirmado! (🪙 +${addedCoins.toLocaleString()}).`,
-        type: 'success',
-      });
-      setCheckoutPackage(null);
-    } catch (err: any) {
-      setToast({ message: `Erro ao registrar saldo no Firebase: ${err.message}`, type: 'error' });
-    } finally {
-      setConfirmingPayment(false);
+  // 14. Polling & Countdown Timer Effect for checkout validation
+  useEffect(() => {
+    if (!checkoutPackage) {
+      setTimeLeft(900);
+      return;
     }
-  };
+
+    // A. Countdown Timer Interval
+    const timerInterval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerInterval);
+          setCheckoutPackage(null);
+          setToast({ message: 'O tempo limite para pagamento do PIX (15 minutos) expirou.', type: 'error' });
+          return 900;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // B. Polling Interval (checks payment status in Efí every 5 seconds)
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/check-payment?txid=${checkoutPackage.txid}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.status === 'CONCLUIDA') {
+            clearInterval(timerInterval);
+            clearInterval(pollInterval);
+            
+            const addedCoins = checkoutPackage.coins;
+            const finalBalance = balance + addedCoins;
+
+            if (!isOfflineSandbox && session?.uid) {
+              const userRef = doc(db, 'users', session.uid);
+              await updateDoc(userRef, { 
+                credits: finalBalance
+              });
+              setProfile((prev: any) => ({ ...prev, credits: finalBalance }));
+            }
+            
+            setBalance(finalBalance);
+            setToast({
+              message: `Pagamento Pix confirmado! (🪙 +${addedCoins.toLocaleString()} liberado).`,
+              type: 'success',
+            });
+            setCheckoutPackage(null);
+          }
+        }
+      } catch (err) {
+        console.error('Error polling payment status:', err);
+      }
+    }, 5000);
+
+    return () => {
+      clearInterval(timerInterval);
+      clearInterval(pollInterval);
+    };
+  }, [checkoutPackage, balance, session, isOfflineSandbox]);
 
   // Active User Identifiers
   const activeName = profile?.displayName || (session ? session.displayName || session.email.split('@')[0] : 'Usuário');
@@ -471,21 +504,20 @@ function App() {
                       </div>
                     </div>
 
-                    {/* Confirm Button */}
-                    <button
-                      onClick={handleConfirmStorePayment}
-                      disabled={confirmingPayment}
-                      className="w-full py-3 rounded-full bg-white text-black font-extrabold text-sm hover:bg-zinc-200 disabled:opacity-40 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      {confirmingPayment ? (
-                        <>
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                          <span>Processando Pagamento (3s)...</span>
-                        </>
-                      ) : (
-                        <span>Confirmar Pagamento</span>
-                      )}
-                    </button>
+                    {/* Polling status & countdown indicator */}
+                    <div className="flex flex-col items-center justify-center py-2.5 gap-2.5 border-t border-zinc-900 pt-5 mt-2">
+                      <div className="flex items-center gap-2 text-sky-400 font-bold text-xs">
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Aguardando pagamento automático...</span>
+                      </div>
+                      
+                      <div className="text-center text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+                        O QR Code expira em:{' '}
+                        <span className="text-white font-mono text-xs">
+                          {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

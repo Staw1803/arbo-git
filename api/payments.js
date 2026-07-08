@@ -63,17 +63,24 @@ export default async function handler(req, res) {
         const qrCodeData = await efipay.pixGenerateQRCode({ id: charge.loc.id });
         if (qrCodeData && qrCodeData.qrcode) {
           responseData = {
+            txid: charge.txid || `efiRealPix${Date.now()}`,
             qrCodeImage: qrCodeData.imagemQrcode,
             pixCopiaECola: qrCodeData.qrcode
           };
         }
       }
     } catch (sdkError) {
-      console.warn("Efí SDK Sandbox call failed. Falling back to error display.", sdkError.message);
+      console.warn("Efí SDK Sandbox call failed. Falling back to error display.", sdkError);
       
-      const errorMessage = `Erro Efí: ${sdkError.message || sdkError}. Verifique as credenciais, o certificado Base64 e se a chave Pix está cadastrada no Efí Bank.`;
+      let errorDetail = sdkError.message || "";
+      try {
+        errorDetail = JSON.stringify(sdkError);
+      } catch (e) {}
+
+      const errorMessage = `Erro Efí: ${errorDetail}. Verifique as credenciais, o certificado Base64 e se a chave Pix está cadastrada no Efí Bank.`;
       
       return res.status(200).json({
+        txid: `efiSandboxPix${Date.now()}`, // Still return mock txid so polling doesn't break
         qrCodeImage: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(errorMessage)}`,
         pixCopiaECola: errorMessage
       });
