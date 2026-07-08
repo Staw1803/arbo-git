@@ -588,7 +588,52 @@ function App() {
     }, 3000);
   };
 
-  // 10. Profile Update handler
+  // 10. Profile Image local uploader with canvas compression helper
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setToast({ message: 'Por favor, selecione um arquivo de imagem válido.', type: 'error' });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const max_size = 120; // 120x120px keeps Firestore document tiny and loading fast
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > max_size) {
+            height *= max_size / width;
+            width = max_size;
+          }
+        } else {
+          if (height > max_size) {
+            width *= max_size / height;
+            width = max_size;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+        setEditAvatarUrl(compressedBase64);
+        setToast({ message: 'Foto carregada com sucesso!', type: 'success' });
+      };
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // 11. Profile Update handler
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!session?.uid) return;
@@ -991,51 +1036,52 @@ function App() {
                 </button>
               </div>
               <div className="p-4 flex flex-col gap-6 text-left animate-fade-in font-medium">
-                
-                {/* Profile Header Card */}
-                <div className="p-5 rounded-2xl bg-transparent border border-zinc-800 flex flex-col gap-5 relative">
+                {/* Profile Header Card - Clean X-Style layout */}
+                <div className="p-5 rounded-2xl bg-transparent border border-zinc-800 flex flex-col gap-4">
                   
-                  {/* Edit profile toggler */}
-                  <button
-                    onClick={() => setIsEditingProfile(!isEditingProfile)}
-                    className="absolute top-4 right-4 flex items-center gap-1 px-3 py-1.5 rounded-full border border-zinc-800 text-[10px] font-extrabold text-zinc-400 hover:text-white hover:border-zinc-700 transition-all duration-150 cursor-pointer"
-                  >
-                    <Edit2 className="w-3 h-3" />
-                    <span>{isEditingProfile ? 'Cancelar' : 'Editar Perfil'}</span>
-                  </button>
-
                   {!isEditingProfile ? (
                     <>
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                          <img
-                            src={activeAvatar}
-                            alt="Avatar"
-                            className="w-16 h-16 rounded-full object-cover border border-zinc-800 shrink-0"
-                          />
-                          <div className="flex flex-col text-left">
-                            <h3 className="text-lg font-extrabold text-white">{activeName}</h3>
-                            <span className="text-zinc-550 text-xs font-mono">{activeHandle}</span>
-                            <div className="flex items-center gap-1.5 mt-1 bg-zinc-900 border border-zinc-850 px-2 py-0.5 rounded-full w-fit">
-                              <Star className="w-3 h-3 text-zinc-350 fill-zinc-350" />
-                              <span className="text-[10px] font-bold text-zinc-400">Classificação: Trader</span>
-                            </div>
-                          </div>
-                        </div>
+                      {/* Avatar & Edit Profile Action Row */}
+                      <div className="flex justify-between items-start gap-4">
+                        <img
+                          src={activeAvatar}
+                          alt="Avatar"
+                          className="w-16 h-16 rounded-full object-cover border border-zinc-800 shrink-0"
+                        />
+                        <button
+                          onClick={() => setIsEditingProfile(true)}
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-zinc-800 text-xs font-black text-white hover:bg-zinc-900 transition-all duration-150 cursor-pointer shrink-0"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                          <span>Editar Perfil</span>
+                        </button>
+                      </div>
 
-                        {/* Starting stats - Zeroed out for new users */}
-                        <div className="flex items-center gap-2">
-                          <div className="border border-zinc-800 px-3 py-1.5 rounded-xl text-center shrink-0">
-                            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wide block">Taxa de Acerto</span>
-                            <span className="text-white font-extrabold text-sm">{profile?.win_rate || 0}%</span>
-                          </div>
-                          <div className="border border-zinc-800 px-3 py-1.5 rounded-xl text-center shrink-0">
-                            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wide block">Apostas Totais</span>
-                            <span className="text-white font-extrabold text-sm">{profile?.total_bets || 0}</span>
-                          </div>
+                      {/* Display & Handle Info */}
+                      <div className="flex flex-col text-left mt-1">
+                        <h3 className="text-xl font-black text-white leading-none">{activeName}</h3>
+                        <span className="text-zinc-555 text-xs font-mono mt-1">{activeHandle}</span>
+                        
+                        <div className="flex items-center gap-1.5 mt-2.5 bg-zinc-900 border border-zinc-850 px-2.5 py-0.5 rounded-full w-fit">
+                          <Star className="w-3 h-3 text-zinc-350 fill-zinc-350" />
+                          <span className="text-[10px] font-bold text-zinc-400">Classificação: Trader</span>
                         </div>
                       </div>
 
+                      {/* Stats Row */}
+                      <div className="flex items-center gap-4 mt-1 border-t border-zinc-900 pt-3">
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <span className="text-white font-black">{profile?.win_rate || 0}%</span>
+                          <span className="text-zinc-500 font-bold uppercase tracking-wider text-[10px]">Taxa de Acerto</span>
+                        </div>
+                        <div className="w-1 h-1 rounded-full bg-zinc-800"></div>
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <span className="text-white font-black">{profile?.total_bets || 0}</span>
+                          <span className="text-zinc-500 font-bold uppercase tracking-wider text-[10px]">Apostas Totais</span>
+                        </div>
+                      </div>
+
+                      {/* Bio */}
                       <div className="border-t border-zinc-900 pt-3.5">
                         <p className="text-zinc-350 text-xs font-bold uppercase tracking-wider text-zinc-555 mb-1">Biografia</p>
                         <p className="text-zinc-300 text-sm leading-relaxed">
@@ -1046,7 +1092,16 @@ function App() {
                   ) : (
                     /* Inline Edit Profile Form */
                     <form onSubmit={handleSaveProfile} className="flex flex-col gap-4 text-left animate-scale-up">
-                      <h4 className="text-sm font-black text-white uppercase tracking-wider mb-2 border-b border-zinc-900 pb-2">Informacoes do Perfil</h4>
+                      <div className="flex justify-between items-center border-b border-zinc-900 pb-2">
+                        <h4 className="text-sm font-black text-white uppercase tracking-wider">Informacoes do Perfil</h4>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingProfile(false)}
+                          className="text-zinc-500 hover:text-white text-xs cursor-pointer hover:underline"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1.5">
@@ -1074,15 +1129,22 @@ function App() {
                         </div>
                       </div>
 
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold text-zinc-450 uppercase">URL do Avatar</label>
-                        <input
-                          type="text"
-                          value={editAvatarUrl}
-                          onChange={(e) => setEditAvatarUrl(e.target.value)}
-                          className="bg-black border border-zinc-800 focus:border-sky-500 rounded-xl px-3 py-2 text-xs text-white focus:outline-none font-bold"
-                          placeholder="https://exemplo.com/sua-foto.jpg"
-                        />
+                      {/* Local File Upload Picker */}
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[10px] font-bold text-zinc-450 uppercase">Foto de Perfil (Upload Local)</label>
+                        <div className="flex items-center gap-4">
+                          <img
+                            src={editAvatarUrl || activeAvatar}
+                            alt="Pre-visualização"
+                            className="w-12 h-12 rounded-full object-cover border border-zinc-800 shrink-0"
+                          />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="text-xs text-zinc-450 file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border file:border-zinc-800 file:text-[10px] file:font-black file:bg-zinc-950 file:text-white hover:file:bg-zinc-900 file:cursor-pointer"
+                          />
+                        </div>
                       </div>
 
                       <div className="flex flex-col gap-1.5">
