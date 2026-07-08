@@ -54,10 +54,10 @@ export default async function handler(req, res) {
         solicitacaoPagador: description || 'Recarga de moedas'
       };
 
-      const charge = await efipay.createImmediateCharge({}, body);
+      const charge = await efipay.pixCreateImmediateCharge({}, body);
       
       if (charge && charge.loc && charge.loc.id) {
-        const qrCodeData = await efipay.generateQRCode({ id: charge.loc.id });
+        const qrCodeData = await efipay.pixGenerateQRCode({ id: charge.loc.id });
         if (qrCodeData && qrCodeData.qrcode) {
           responseData = {
             qrCodeImage: qrCodeData.imagemQrcode, // Efi returns base64 image here
@@ -73,12 +73,12 @@ export default async function handler(req, res) {
     if (!responseData) {
       const mockTxid = `efiSandboxPix${Date.now()}`;
       const mockPixCopiaECola = `00020101021226870014br.gov.bcb.pix2565https://qr.efi.com.br/pix/v1/homologacao/charge-${mockTxid}5204000053039865405${formattedAmount}5802BR5915Efi_Pay_Sandbox6009Sao_Paulo62070503***6304D1B2`;
-      
-      // A standard beautiful base64 QR Code placeholder image
-      const mockQrCodeImage = `data:image/png;base64,iVBORw5KGgoAAAANSUhEUgAAAOgAAADoCAYAAAA6G+JuAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4wYDFg0W8uPtcAAAC75JREFUeNrtl81tIzEMhR2cghMwB2fgDpyCM3ACziAdKEEayK4WpAE91ECFk+2iLkoXqN189wP0M5wZySNFiqLofD4fAgQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBATHYwfw25t58h8BwR/mefN3H/v7H0N/dF10Hvd0tN3eW4q+29t2e293W2uKrvO4p1v5z6VwUf8vG1uX/q7r/+78/14P7+tX/nNl0F0+fM9V4X1/3v2121sXd7t0Ufc4Pq7t49oN4aKe/5X/u/P/e/2/P2a//Bf9GToPjN/O7+F1/x6u22tX9/h7r/t1D//7DOfP0P98/u5j/4c1XNu/H6+79Lg/Zq/8N51N93j7F9c5Pq7P0N+F4bqL295S/h4u6t/D2H/u/P9ew/t1D+/rV/7bzoP+5/P6uI/H/ZlZ/Vv4f7/h/9rVPf7u9t7F3c8N/9fvH3d7S9H/e/i/e/i7y3/RH/qf2f8L+rtwUc97/D28rt/DtXv434/9/Xv8Xbh2Q7j2/P9e23/RP4Y9jX/x7y7/RX/If0v9W8rfK/zveR7/Tf97D7/Xf9Ofob/1n13c0/U7XH/D72XoM/TP7f+F/5b/tpNH/1L+3sW1fYarfx9f27+fP16/l/+ev7b/2P9h9P+e//8L/z3M0L+E56v/2f2/tP8X/V2e95/7f/P2j2H/m7c//Bf9sQ/e856hz9Cfr/1/e/1b/tvV/eL/0e2/1/+9wvkz9Hf+8/XwX3Tpfw//p6H/B8d7g+M5wP899Gf+m/+mP0P/Z9H/H/s3Zej/PPRP9J+H/qR/oT/pT/oT+n+mP+lP+v9J//8BBAwL/B+0U8+mAAAAAElFTkSuQmCC`;
+      const mockQrCodeImage = `https://api.qrcode.org/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(mockPixCopiaECola)}`;
+      // Alternatively use qrserver
+      const fallbackQrCode = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(mockPixCopiaECola)}`;
 
       responseData = {
-        qrCodeImage: mockQrCodeImage,
+        qrCodeImage: fallbackQrCode,
         pixCopiaECola: mockPixCopiaECola
       };
     }
