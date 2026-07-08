@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import Feed from './components/Feed';
 import RightSidebar from './components/RightSidebar';
 import Toast from './components/Toast';
 import Auth from './components/Auth';
+import WalletTab from './components/WalletTab';
 
 import { auth, db, isFirebaseConfigured } from './firebaseClient';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -39,6 +40,12 @@ function App() {
   const [loadingPix, setLoadingPix] = useState<boolean>(false);
   const [copiedPix, setCopiedPix] = useState<boolean>(false);
   const [timeLeft, setTimeLeft] = useState<number>(900); // 15 minutes (900 seconds)
+
+  // Seed DB function ref (exposed by Feed via callback)
+  const seedFnRef = useRef<(() => Promise<void>) | null>(null);
+  const handleSeedDatabase = async () => {
+    if (seedFnRef.current) await seedFnRef.current();
+  };
 
   // Profile Edit States
   const [isEditingProfile, setIsEditingProfile] = useState<boolean>(false);
@@ -352,6 +359,7 @@ function App() {
           username={activeName}
           userHandle={activeHandle}
           userAvatar={activeAvatar}
+          onSeedDatabase={handleSeedDatabase}
         />
 
         {/* Center Main Scroll Container */}
@@ -368,6 +376,20 @@ function App() {
                 credits: balance
               } : null}
               setToast={setToast}
+              onSeedReady={(fn) => { seedFnRef.current = fn; }}
+            />
+          )}
+
+          {/* Wallet Tab */}
+          {activeTab === 'wallet' && (
+            <WalletTab
+              balance={balance}
+              userId={session?.uid || null}
+              setToast={setToast}
+              onBalanceUpdate={(newBal) => {
+                setBalance(newBal);
+                setProfile((prev: any) => ({ ...prev, credits: newBal }));
+              }}
             />
           )}
 
@@ -393,13 +415,31 @@ function App() {
                   </div>
                 ) : !checkoutPackage ? (
                   /* Packages Grid */
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     
-                    {/* Starter */}
+                    {/* Mini - R$5 */}
+                    <div className="border border-zinc-800 rounded-3xl p-5 flex flex-col justify-between gap-6 bg-transparent hover:border-zinc-700 transition-all duration-150 text-center">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-2xl font-black text-white">🪙 50</span>
+                        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Pacote Mini</span>
+                        <p className="text-zinc-500 text-xs mt-2 leading-relaxed">Perfeito para testar e dar primeiras gorjetas.</p>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <div className="text-lg font-black text-white">R$ 5,00</div>
+                        <button
+                          onClick={() => handleSelectStorePackage({ name: 'Mini', coins: 50, price: 5 })}
+                          className="w-full py-2.5 rounded-full bg-white text-black font-extrabold text-xs cursor-pointer hover:bg-zinc-200 transition-all duration-150"
+                        >
+                          Comprar via PIX
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Starter - R$10 */}
                     <div className="border border-zinc-800 rounded-3xl p-5 flex flex-col justify-between gap-6 bg-transparent hover:border-zinc-700 transition-all duration-150 text-center">
                       <div className="flex flex-col gap-1">
                         <span className="text-2xl font-black text-white">🪙 100</span>
-                        <span className="text-[10px] text-zinc-550 font-bold uppercase tracking-wider">Pacote Starter</span>
+                        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Pacote Starter</span>
                         <p className="text-zinc-500 text-xs mt-2 leading-relaxed">Ideal para começar e fazer posts simples.</p>
                       </div>
                       <div className="flex flex-col gap-2">

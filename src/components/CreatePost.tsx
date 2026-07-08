@@ -1,27 +1,26 @@
-import React, { useState, useRef } from 'react';
-import { Send, Image, Smile, Calendar, MapPin } from 'lucide-react';
+import React, { useState } from 'react';
+import { Send, Image, Smile, Coins } from 'lucide-react';
 
 interface CreatePostProps {
-  onPublishPost: (content: string) => Promise<void>;
+  onPublishPost: (content: string, monetized: boolean) => Promise<void>;
   userAvatar: string;
 }
 
 export default function CreatePost({ onPublishPost, userAvatar }: CreatePostProps) {
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [monetized, setMonetized] = useState(false);
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim() || isSubmitting) return;
-
     setIsSubmitting(true);
     try {
-      await onPublishPost(content.trim());
+      await onPublishPost(content.trim(), monetized);
       setContent('');
-      if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
-      }
+      setMonetized(false);
+      if (textareaRef.current) textareaRef.current.style.height = 'auto';
     } catch (error) {
       console.error('Error publishing post:', error);
     } finally {
@@ -56,8 +55,21 @@ export default function CreatePost({ onPublishPost, userAvatar }: CreatePostProp
             className="w-full bg-transparent text-white placeholder-zinc-600 text-lg font-medium focus:outline-none resize-none py-1 border-none outline-none leading-relaxed"
             disabled={isSubmitting}
           />
-          
-          <div className="flex items-center justify-between border-t border-zinc-900 pt-3 mt-2">
+
+          <button
+            type="button"
+            onClick={() => setMonetized(!monetized)}
+            className={`self-start flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-black border transition-all duration-200 cursor-pointer mt-1 mb-2 ${
+              monetized
+                ? 'bg-amber-400/10 border-amber-400/40 text-amber-400'
+                : 'border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700'
+            }`}
+          >
+            <Coins className={`w-3.5 h-3.5 ${monetized ? 'text-amber-400' : ''}`} />
+            <span>{monetized ? 'Gorjetas ativadas ✓' : 'Aceitar Gorjetas'}</span>
+          </button>
+
+          <div className="flex items-center justify-between border-t border-zinc-900 pt-3 mt-1">
             <div className="flex items-center gap-4 text-zinc-500">
               <button type="button" className="hover:text-white transition-colors duration-150 cursor-pointer">
                 <Image className="w-4 h-4" />
@@ -65,14 +77,12 @@ export default function CreatePost({ onPublishPost, userAvatar }: CreatePostProp
               <button type="button" className="hover:text-white transition-colors duration-150 cursor-pointer">
                 <Smile className="w-4 h-4" />
               </button>
-              <button type="button" className="hover:text-white transition-colors duration-150 cursor-pointer">
-                <Calendar className="w-4 h-4" />
-              </button>
-              <button type="button" className="hover:text-white transition-colors duration-150 cursor-pointer">
-                <MapPin className="w-4 h-4" />
-              </button>
+              {content.length > 0 && (
+                <span className={`text-[10px] font-bold tabular-nums ${content.length > 250 ? 'text-amber-400' : 'text-zinc-600'}`}>
+                  {280 - content.length}
+                </span>
+              )}
             </div>
-            
             <button
               type="submit"
               disabled={!content.trim() || isSubmitting}
