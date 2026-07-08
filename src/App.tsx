@@ -467,10 +467,11 @@ function App() {
     const emailVal = session?.email || 'test@test.com';
 
     try {
-      const response = await fetch('/api-mp/v1/payments', {
+      const response = await fetch('https://corsproxy.io/?https://api.mercadopago.com/v1/payments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_MP_ACCESS_TOKEN}`,
           'X-Idempotency-Key': `predix-${Date.now()}`
         },
         body: JSON.stringify({
@@ -608,7 +609,7 @@ function App() {
     // Basic guard
     const totalDeposited = profile?.total_deposited || 0;
     const totalWagered = profile?.total_wagered || 0;
-    if (balance < 500 || totalWagered < totalDeposited) {
+    if (totalDeposited <= 0 || balance < 500 || totalWagered < totalDeposited) {
       setToast({ message: 'Saque bloqueado pelas regras de rollover.', type: 'error' });
       return;
     }
@@ -662,8 +663,8 @@ function App() {
   const totalDepositedVal = profile?.total_deposited || 0;
   const totalWageredVal = profile?.total_wagered || 0;
   const missingWagerVal = Math.max(0, totalDepositedVal - totalWageredVal);
-  const isRolloverCleared = totalWageredVal >= totalDepositedVal;
-  const isWithdrawEnabled = balance >= 500 && isRolloverCleared;
+  const isRolloverCleared = totalDepositedVal > 0 && totalWageredVal >= totalDepositedVal;
+  const isWithdrawEnabled = totalDepositedVal > 0 && balance >= 500 && isRolloverCleared;
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 flex justify-center selection:bg-sky-500 selection:text-black">
@@ -755,14 +756,20 @@ function App() {
                     </button>
 
                     {/* Rollover error warning */}
-                    {!isRolloverCleared && (
-                      <p className="text-[11px] text-zinc-500 leading-relaxed font-semibold mt-1">
+                    {totalDepositedVal === 0 && (
+                      <p className="text-[11px] text-zinc-550 leading-relaxed font-semibold mt-1">
+                        Faça pelo menos um depósito e aposte esse valor para liberar saques.
+                      </p>
+                    )}
+
+                    {totalDepositedVal > 0 && !isRolloverCleared && (
+                      <p className="text-[11px] text-zinc-550 leading-relaxed font-semibold mt-1">
                         Para liberar o saque, você precisa apostar as moedas depositadas. Faltam <span className="text-sky-400 font-black">🪙 {missingWagerVal.toLocaleString()}</span> moedas.
                       </p>
                     )}
 
-                    {isRolloverCleared && balance < 500 && (
-                      <p className="text-[11px] text-zinc-500 leading-relaxed font-semibold mt-1">
+                    {totalDepositedVal > 0 && isRolloverCleared && balance < 500 && (
+                      <p className="text-[11px] text-zinc-550 leading-relaxed font-semibold mt-1">
                         Seu rollover está liberado! Porém, você precisa de no mínimo <span className="text-white">🪙 500</span> para solicitar o saque.
                       </p>
                     )}
@@ -825,32 +832,14 @@ function App() {
                     {/* Starter */}
                     <div className="border border-zinc-800 rounded-3xl p-5 flex flex-col justify-between gap-6 bg-transparent hover:border-zinc-700 transition-all duration-150 text-center">
                       <div className="flex flex-col gap-1">
-                        <span className="text-2xl font-black text-white">🪙 50</span>
+                        <span className="text-2xl font-black text-white">🪙 100</span>
                         <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Pacote Starter</span>
                         <p className="text-zinc-500 text-xs mt-2 leading-relaxed">Ideal para iniciantes no mercado de fofocas.</p>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <div className="text-lg font-black text-white">R$ 5,00</div>
-                        <button
-                          onClick={() => handleSelectStorePackage({ name: 'Starter', coins: 50, price: 5 })}
-                          className="w-full py-2.5 rounded-full bg-white text-black font-extrabold text-xs cursor-pointer hover:bg-zinc-200 transition-all duration-150"
-                        >
-                          Comprar via PIX
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Bronze */}
-                    <div className="border border-zinc-800 rounded-3xl p-5 flex flex-col justify-between gap-6 bg-transparent hover:border-zinc-700 transition-all duration-150 text-center">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-2xl font-black text-white">🪙 100</span>
-                        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Pacote Bronze</span>
-                        <p className="text-zinc-500 text-xs mt-2 leading-relaxed">Para quem quer começar a testar teorias.</p>
-                      </div>
-                      <div className="flex flex-col gap-2">
                         <div className="text-lg font-black text-white">R$ 10,00</div>
                         <button
-                          onClick={() => handleSelectStorePackage({ name: 'Bronze', coins: 100, price: 10 })}
+                          onClick={() => handleSelectStorePackage({ name: 'Starter', coins: 100, price: 10 })}
                           className="w-full py-2.5 rounded-full bg-white text-black font-extrabold text-xs cursor-pointer hover:bg-zinc-200 transition-all duration-150"
                         >
                           Comprar via PIX
@@ -858,18 +847,36 @@ function App() {
                       </div>
                     </div>
 
-                    {/* Prata */}
+                    {/* Pro */}
                     <div className="border border-sky-500/20 rounded-3xl p-5 flex flex-col justify-between gap-6 bg-sky-950/5 hover:border-sky-500/40 transition-all duration-150 text-center relative">
                       <div className="absolute top-3 right-3 bg-sky-500 text-black text-[8.5px] font-black uppercase px-2 py-0.5 rounded-full">Popular</div>
                       <div className="flex flex-col gap-1">
-                        <span className="text-2xl font-black text-white">🪙 200</span>
-                        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Pacote Prata</span>
+                        <span className="text-2xl font-black text-white">🪙 500</span>
+                        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Pacote Pro</span>
+                        <p className="text-zinc-500 text-xs mt-2 leading-relaxed">Para quem quer começar a testar teorias.</p>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <div className="text-lg font-black text-white">R$ 45,00</div>
+                        <button
+                          onClick={() => handleSelectStorePackage({ name: 'Pro', coins: 500, price: 45 })}
+                          className="w-full py-2.5 rounded-full bg-white text-black font-extrabold text-xs cursor-pointer hover:bg-zinc-200 transition-all duration-150"
+                        >
+                          Comprar via PIX
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Whale */}
+                    <div className="border border-zinc-800 rounded-3xl p-5 flex flex-col justify-between gap-6 bg-transparent hover:border-zinc-700 transition-all duration-150 text-center">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-2xl font-black text-white">🪙 1000</span>
+                        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Pacote Whale</span>
                         <p className="text-zinc-500 text-xs mt-2 leading-relaxed">Para quem aposta sério e quer maximizar lucros.</p>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <div className="text-lg font-black text-white">R$ 20,00</div>
+                        <div className="text-lg font-black text-white">R$ 80,00</div>
                         <button
-                          onClick={() => handleSelectStorePackage({ name: 'Prata', coins: 200, price: 20 })}
+                          onClick={() => handleSelectStorePackage({ name: 'Whale', coins: 1000, price: 80 })}
                           className="w-full py-2.5 rounded-full bg-white text-black font-extrabold text-xs cursor-pointer hover:bg-zinc-200 transition-all duration-150"
                         >
                           Comprar via PIX
