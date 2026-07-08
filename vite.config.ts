@@ -8,6 +8,9 @@ export default defineConfig(({ mode }) => {
   
   return {
     plugins: [react(), tailwindcss()],
+    build: {
+      chunkSizeWarningLimit: 1600,
+    },
     server: {
       proxy: {
         '/api/payments': {
