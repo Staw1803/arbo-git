@@ -41,8 +41,8 @@ export default async function handler(req, res) {
       sandbox: isSandbox,
       client_id: client_id,
       client_secret: client_secret,
-      certificate: cert_base64 || '',
-      cert_base64: !!cert_base64
+      certificate: isSandbox ? '' : (cert_base64 || ''),
+      cert_base64: isSandbox ? false : !!cert_base64
     };
 
     let responseData = null;
