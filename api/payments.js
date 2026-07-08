@@ -1,3 +1,7 @@
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.VITE_STRIPE_SECRET_KEY);
+
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -14,19 +18,36 @@ export default async function handler(req, res) {
   }
 
   try {
-    const token = process.env.VITE_MP_ACCESS_TOKEN || 'APP_USR-c9cf66a7-a044-4859-a9ad-544598f52b76';
-    const response = await fetch('https://api.mercadopago.com/v1/payments', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        'X-Idempotency-Key': req.headers['x-idempotency-key'] || `predix-${Date.now()}`
+    const { transaction_amount, description } = req.body;
+    
+    if (!transaction_amount) {
+      res.status(400).json({ error: "Missing transaction_amount parameter." });
+      return;
+    }
+
+    // Convert BRL to cents (R$ 10.00 = 1000)
+    const amountInCents = Math.round(transaction_amount * 100);
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amountInCents,
+      currency: 'brl',
+      payment_method_types: ['pix'],
+      confirm: true,
+      payment_method_data: {
+        type: 'pix'
       },
-      body: JSON.stringify(req.body)
+      description: description || 'Recarga Predix'
     });
 
-    const data = await response.json();
-    res.status(response.status).json(data);
+    if (paymentIntent.status === 'requires_action' && paymentIntent.next_action?.pix_display_details) {
+      const pixDetails = paymentIntent.next_action.pix_display_details;
+      res.status(200).json({
+        image_url_png: pixDetails.image_url_png,
+        pix_copy_paste_string: pixDetails.qr_code_copy_to_clipboard
+      });
+    } else {
+      res.status(400).json({ error: "Stripe did not return Pix next_action details. Status: " + paymentIntent.status });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

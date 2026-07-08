@@ -86,7 +86,7 @@ function App() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Store & Checkout States
-  const [checkoutPackage, setCheckoutPackage] = useState<{ name: string; coins: number; price: number; qrCode: string; qrCodeBase64: string } | null>(null);
+  const [checkoutPackage, setCheckoutPackage] = useState<{ name: string; coins: number; price: number; qrCode: string; qrCodeBase64: string; qrCodeUrl?: string } | null>(null);
   const [loadingPix, setLoadingPix] = useState<boolean>(false);
   const [confirmingPayment, setConfirmingPayment] = useState<boolean>(false);
   const [copiedPix, setCopiedPix] = useState<boolean>(false);
@@ -472,12 +472,10 @@ function App() {
 
 
 
-  // 9. Store / Checkout Handlers
+  // 9. Store / Checkout Handlers (Stripe Pix)
   const handleSelectStorePackage = async (pkg: { name: string; coins: number; price: number }) => {
     setLoadingPix(true);
     setCheckoutPackage(null);
-
-    const emailVal = session?.email || 'test@test.com';
 
     try {
       const response = await fetch('/api/payments', {
@@ -488,33 +486,25 @@ function App() {
         },
         body: JSON.stringify({
           transaction_amount: pkg.price,
-          description: `Recarga Predix - ${pkg.coins} moedas`,
-          payment_method_id: 'pix',
-          payer: {
-            email: emailVal,
-            first_name: emailVal.split('@')[0] || 'Cliente',
-            last_name: 'Predix'
-          }
+          description: `Recarga Predix - ${pkg.coins} moedas`
         })
       });
 
       const data = await response.json();
 
-      if (response.ok && data.point_of_interaction?.transaction_data) {
-        const transData = data.point_of_interaction.transaction_data;
+      if (response.ok && data.pix_copy_paste_string) {
         setCheckoutPackage({
           name: pkg.name,
           coins: pkg.coins,
           price: pkg.price,
-          qrCode: transData.qr_code,
-          qrCodeBase64: transData.qr_code_base64
+          qrCode: data.pix_copy_paste_string,
+          qrCodeBase64: '',
+          qrCodeUrl: data.image_url_png
         });
-        setToast({ message: 'PIX gerado via Mercado Pago!', type: 'success' });
+        setToast({ message: 'PIX gerado via Stripe!', type: 'success' });
       } else {
-        // Extract detailed error description from Mercado Pago response
-        console.error('Mercado Pago API error response:', data);
-        const errorDetail = data.message || (data.cause && data.cause[0]?.description) || 'Falha na validação do pagamento';
-        throw new Error(errorDetail);
+        console.error('Stripe API error response:', data);
+        throw new Error(data.error || 'Falha na validação do pagamento');
       }
     } catch (err: any) {
       console.error('Checkout network/API error:', err);
@@ -523,11 +513,11 @@ function App() {
         name: pkg.name,
         coins: pkg.coins,
         price: pkg.price,
-        qrCode: `00020101021226870014br.gov.bcb.pix2565https://qr.mercadopago.com/pix/v1/mp-predix-${pkg.price}-${Date.now()}5204000053039865405${pkg.price.toFixed(2)}5802BR5910Predix_Inc6009Sao_Paulo62070503***6304CA12`,
+        qrCode: `00020101021226870014br.gov.bcb.pix2565https://qr.stripe.com/pix/v1/mp-predix-${pkg.price}-${Date.now()}5204000053039865405${pkg.price.toFixed(2)}5802BR5910Predix_Inc6009Sao_Paulo62070503***6304CA12`,
         qrCodeBase64: ''
       });
       setToast({ 
-        message: `Checkout Error: ${err.message || 'Falha de conexão com o Mercado Pago.'}`, 
+        message: `Checkout Error: ${err.message || 'Falha de conexão com a Stripe.'}`, 
         type: 'error' 
       });
     } finally {
@@ -978,7 +968,13 @@ function App() {
 
                     {/* QR Code Real/Mock Display */}
                     <div className="bg-white p-4 rounded-2xl flex flex-col items-center justify-center border border-zinc-800 w-44 h-44 mx-auto select-none gap-2">
-                      {checkoutPackage.qrCodeBase64 ? (
+                      {checkoutPackage.qrCodeUrl ? (
+                        <img 
+                          src={checkoutPackage.qrCodeUrl} 
+                          alt="QR Code PIX" 
+                          className="w-32 h-32 object-contain"
+                        />
+                      ) : checkoutPackage.qrCodeBase64 ? (
                         <img 
                           src={`data:image/jpeg;base64,${checkoutPackage.qrCodeBase64}`} 
                           alt="QR Code PIX" 
