@@ -3,7 +3,7 @@ import { auth, db, isFirebaseConfigured } from '../firebaseClient';
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
-  signInWithPopup, 
+  signInWithRedirect, 
   GoogleAuthProvider 
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
@@ -80,29 +80,11 @@ export default function Auth({ onLoginSimulated, setToast }: AuthProps) {
     setLoading(true);
     try {
       const providerInstance = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, providerInstance);
-      const user = result.user;
-
-      // Check if user document already exists in Firestore
-      const userRef = doc(db, 'users', user.uid);
-      const userSnap = await getDoc(userRef);
-      
-      if (!userSnap.exists()) {
-        const rawUsername = user.displayName?.toLowerCase().replace(/\s+/g, '') || user.email?.split('@')[0] || 'user';
-        const usernameVal = rawUsername.startsWith('@') ? rawUsername : `@${rawUsername}`;
-        await setDoc(userRef, {
-          id: user.uid,
-          username: usernameVal,
-          displayName: user.displayName || rawUsername,
-          photoURL: user.photoURL || `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80`,
-          credits: 0
-        });
-      }
-
-      setToast({ message: 'Login via Google concluído!', type: 'success' });
+      // Use redirect for better mobile support instead of popup
+      await signInWithRedirect(auth, providerInstance);
+      // The rest is handled by onAuthStateChanged in App.tsx when they return
     } catch (err: any) {
-      setToast({ message: `Erro OAuth: ${err.message}`, type: 'error' });
-    } finally {
+      setToast({ message: `Erro ao iniciar Google Login: ${err.message}`, type: 'error' });
       setLoading(false);
     }
   };

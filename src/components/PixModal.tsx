@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Copy, Check, QrCode, AlertCircle, RefreshCw } from 'lucide-react';
+import { X, QrCode, Copy, Check, Coins, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface PixModalProps {
   isOpen: boolean;
@@ -55,7 +55,7 @@ export default function PixModal({ isOpen, onClose, coinsPackage, onPaymentSucce
         <div className="p-3.5 rounded-xl bg-zinc-950 border border-zinc-850 flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-[10px] font-bold text-zinc-550 uppercase">Item adquirido</span>
-            <span className="text-sm font-black text-white">Pacote 🪙 {coinsPackage.coins.toLocaleString()} moedas</span>
+            <span className="text-sm font-black text-white flex items-center gap-1.5">Pacote <Coins className="w-4 h-4 text-amber-400 fill-amber-400" /> {coinsPackage.coins.toLocaleString()} moedas</span>
           </div>
           <div className="text-right">
             <span className="text-[10px] font-bold text-zinc-555 uppercase block">Valor</span>

@@ -66,7 +66,7 @@ export default function WalletTab({ balance, userId, setToast, onBalanceUpdate }
           </div>
           <div className="flex items-end gap-3">
             <span className="text-4xl font-black text-white">{balance.toLocaleString('pt-BR')}</span>
-            <span className="text-zinc-400 font-bold text-sm mb-1">🪙 moedas</span>
+            <span className="text-zinc-400 font-bold text-sm mb-1 flex items-center gap-1.5"><Coins className="w-4 h-4 text-amber-400 fill-amber-400" /> moedas</span>
           </div>
           <div className="flex items-center gap-2 border-t border-zinc-900 pt-3 mt-1">
             <Coins className="w-3.5 h-3.5 text-zinc-500" />

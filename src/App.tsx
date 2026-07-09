@@ -21,7 +21,8 @@ import {
   QrCode,
   Copy,
   Check,
-  RefreshCw
+  RefreshCw,
+  Coins
 } from 'lucide-react';
 
 function App() {
@@ -236,7 +237,7 @@ function App() {
             
             setBalance(finalBalance);
             setToast({
-              message: `Pagamento Pix confirmado! (🪙 +${addedCoins.toLocaleString()} liberado).`,
+              message: `Pagamento Pix confirmado! (+${addedCoins.toLocaleString()} liberado).`,
               type: 'success',
             });
             setCheckoutPackage(null);
@@ -279,7 +280,7 @@ function App() {
         />
 
         {/* Center Main Scroll Container */}
-        <main className="flex-1 min-w-0 min-h-screen pl-20 md:pl-0 flex flex-col">
+        <main className="flex-1 min-w-0 min-h-screen pb-20 md:pb-0 flex flex-col">
           
           {/* Feed Tab */}
           {activeTab === 'feed' && (
@@ -336,7 +337,7 @@ function App() {
                     {/* Mini - R$5 */}
                     <div className="border border-zinc-800 rounded-3xl p-5 flex flex-col justify-between gap-6 bg-transparent hover:border-zinc-700 transition-all duration-150 text-center">
                       <div className="flex flex-col gap-1">
-                        <h3 className="text-xl font-black text-white text-center tracking-tight flex items-center justify-center gap-1.5"><span className="text-amber-400">🪙</span> 50</h3>
+                        <h3 className="text-xl font-black text-white text-center tracking-tight flex items-center justify-center gap-1.5"><Coins className="w-5 h-5 text-amber-400 fill-amber-400" /> 50</h3>
                         <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest text-center mt-1">Pacote Mini</p>
                         <p className="text-xs text-zinc-400 text-center mt-4 mb-6 leading-relaxed font-semibold px-2">Perfeito para testar e dar primeiras gorjetas.</p>
                       </div>
@@ -354,7 +355,7 @@ function App() {
                     {/* Starter - R$10 */}
                     <div className="border border-zinc-800 rounded-3xl p-5 flex flex-col justify-between gap-6 bg-transparent hover:border-zinc-700 transition-all duration-150 text-center">
                       <div className="flex flex-col gap-1">
-                        <h3 className="text-xl font-black text-white text-center tracking-tight flex items-center justify-center gap-1.5"><span className="text-amber-400">🪙</span> 100</h3>
+                        <h3 className="text-xl font-black text-white text-center tracking-tight flex items-center justify-center gap-1.5"><Coins className="w-5 h-5 text-amber-400 fill-amber-400" /> 100</h3>
                         <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest text-center mt-1">Pacote Starter</p>
                         <p className="text-xs text-zinc-400 text-center mt-4 mb-6 leading-relaxed font-semibold px-2">Ideal para começar e fazer posts simples.</p>
                       </div>
@@ -370,12 +371,12 @@ function App() {
                     </div>
 
                     {/* Pro */}
-                    <div className="border border-sky-500/20 rounded-3xl p-5 flex flex-col justify-between gap-6 bg-sky-950/5 hover:border-sky-500/40 transition-all duration-150 text-center relative">
-                      <div className="absolute top-3 right-3 bg-sky-500 rounded-full px-2 py-0.5">
+                    <div className="border border-sky-500/20 rounded-3xl p-5 flex flex-col justify-between gap-6 bg-sky-950/5 hover:border-sky-500/40 transition-all duration-150 text-center relative overflow-hidden">
+                      <div className="absolute top-0 right-0 bg-sky-500 px-3 py-1 rounded-bl-xl">
                         <span className="text-[9px] font-black uppercase tracking-wider text-black">Popular</span>
                       </div>
-                      <div className="flex flex-col gap-1">
-                        <h3 className="text-2xl font-black text-white text-center tracking-tight flex items-center justify-center gap-1.5"><span className="text-amber-400">🪙</span> 500</h3>
+                      <div className="flex flex-col gap-1 mt-4">
+                        <h3 className="text-2xl font-black text-white text-center tracking-tight flex items-center justify-center gap-1.5"><Coins className="w-6 h-6 text-amber-400 fill-amber-400" /> 500</h3>
                         <p className="text-[10px] font-black text-sky-400 uppercase tracking-widest text-center mt-1">Pacote Pro</p>
                         <p className="text-xs text-zinc-400 text-center mt-4 mb-6 leading-relaxed font-semibold px-2">Perfeito para usuários ativos no feed.</p>
                       </div>
@@ -393,7 +394,7 @@ function App() {
                     {/* Whale */}
                     <div className="border border-zinc-800 rounded-3xl p-5 flex flex-col justify-between gap-6 bg-transparent hover:border-zinc-700 transition-all duration-150 text-center">
                       <div className="flex flex-col gap-1">
-                        <h3 className="text-3xl font-black text-white text-center tracking-tight flex items-center justify-center gap-1.5"><span className="text-amber-400">🪙</span> 1000</h3>
+                        <h3 className="text-3xl font-black text-white text-center tracking-tight flex items-center justify-center gap-1.5"><Coins className="w-7 h-7 text-amber-400 fill-amber-400" /> 1000</h3>
                         <p className="text-[10px] font-black text-white uppercase tracking-widest text-center mt-1">Pacote Whale</p>
                         <p className="text-xs text-zinc-400 text-center mt-4 mb-6 leading-relaxed font-semibold px-2">Para quem quer apoiar ao máximo a nossa rede.</p>
                       </div>

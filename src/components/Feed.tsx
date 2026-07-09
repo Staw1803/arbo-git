@@ -40,7 +40,7 @@ const FAKE_POSTS = [
   'Será que alguém me segue de volta? 👀 Seguindo todo mundo aqui.',
   'Que tal a gente marcar uma live aqui no Predix semana que vem?',
   'Tecnologia, inovação e PIX. Tá aí o trio do futuro do Brasil. 💚💛',
-  'Acabei de receber minha primeira gorjeta aqui no Predix! Valeu demais! 🪙',
+  'Acabei de receber minha primeira gorjeta aqui no Predix! Valeu demais! 💛',
   'Todo dia é um ótimo dia pra aprender algo novo. O que vocês estão estudando hoje?',
   'Minha chave PIX está ativa e pronta pra receber aquele Predix coin 😂',
   'Primeira semana no Predix e já me sinto em casa. Comunidade boa demais.',
@@ -111,7 +111,7 @@ export default function Feed({ currentUser, setToast, onSeedReady }: FeedProps) 
           timestamp: { toDate: () => new Date(Date.now() - 7200000) }, likesCount: 142 },
         { id: 'mock-2', authorId: 'system-2', authorName: 'Predix Team', authorHandle: '@predix_social',
           authorAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=150&q=80',
-          content: 'Bem-vindo ao Predix! Agora com gorjetas monetizadas 🪙', monetized: true,
+          content: 'Bem-vindo ao Predix! Agora com gorjetas monetizadas', monetized: true,
           timestamp: { toDate: () => new Date(Date.now() - 18000000) }, likesCount: 57 }
       ]);
       setLoading(false);
@@ -174,15 +174,15 @@ export default function Feed({ currentUser, setToast, onSeedReady }: FeedProps) 
   const handleTip = async (_postId: string, authorId: string) => {
     if (!currentUser) { setToast({ message: 'Faça login para dar gorjeta.', type: 'error' }); return; }
     if ((currentUser.credits || 0) < GORJETA_MOEDAS) {
-      setToast({ message: `Saldo insuficiente! Precisa de ${GORJETA_MOEDAS} 🪙.`, type: 'error' }); return;
+      setToast({ message: `Saldo insuficiente! Precisa de ${GORJETA_MOEDAS} moedas.`, type: 'error' }); return;
     }
-    if (!isFirebaseConfigured) { setToast({ message: `Gorjeta de ${GORJETA_MOEDAS} 🪙 enviada!`, type: 'success' }); return; }
+    if (!isFirebaseConfigured) { setToast({ message: `Gorjeta de ${GORJETA_MOEDAS} moedas enviada!`, type: 'success' }); return; }
     try {
       const batch = writeBatch(db);
       batch.update(doc(db, 'users', currentUser.id), { credits: increment(-GORJETA_MOEDAS) });
       batch.update(doc(db, 'users', authorId), { credits: increment(GORJETA_MOEDAS) });
       await batch.commit();
-      setToast({ message: `Gorjeta de ${GORJETA_MOEDAS} 🪙 enviada!`, type: 'success' });
+      setToast({ message: `Gorjeta de ${GORJETA_MOEDAS} moedas enviada!`, type: 'success' });
     } catch (err: any) { setToast({ message: `Erro: ${err.message}`, type: 'error' }); }
   };
 

@@ -4,7 +4,7 @@ import {
   collection, query, where, getDocs, doc, updateDoc,
   onSnapshot, orderBy, increment
 } from 'firebase/firestore';
-import { Edit2, Camera, Check, X, Loader, Calendar } from 'lucide-react';
+import { Edit2, Camera, Check, X, Loader, Calendar, Coins } from 'lucide-react';
 import AvatarCropModal from './AvatarCropModal';
 import PostCard from './PostCard';
 import { MOEDA_VALOR_REAL } from '../constants';
@@ -250,7 +250,7 @@ export default function ProfilePage({ session, profile, balance, setToast, onPro
                     <span className="text-zinc-500 text-xs font-semibold">Seguindo</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-left ml-auto">
-                    <span className="text-amber-400 font-black text-sm">🪙 {balance.toLocaleString('pt-BR')}</span>
+                    <span className="text-amber-400 font-black text-sm flex items-center gap-1.5"><Coins className="w-4 h-4 fill-amber-400 text-amber-400" /> {balance.toLocaleString('pt-BR')}</span>
                     <span className="text-zinc-500 text-xs font-semibold">≈ R$ {brlValue}</span>
                   </div>
                 </div>
