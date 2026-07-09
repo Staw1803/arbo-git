@@ -84,6 +84,29 @@ export default function PostCard({ post, onLike, onCommentClick, onTip, currentU
 
         <p className="text-zinc-200 text-sm leading-relaxed whitespace-pre-wrap break-words mb-3">{post.content}</p>
 
+        {/* Media (image or video) */}
+        {(post as any).mediaURL && (
+          <div className="mb-3 rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950">
+            {(post as any).mediaType === 'video' ? (
+              <video
+                src={(post as any).mediaURL}
+                controls
+                preload="metadata"
+                onClick={e => e.stopPropagation()}
+                className="w-full max-h-80 object-contain"
+              />
+            ) : (
+              <img
+                src={(post as any).mediaURL}
+                alt="Mídia do post"
+                onClick={e => e.stopPropagation()}
+                className="w-full max-h-80 object-cover cursor-zoom-in"
+                loading="lazy"
+              />
+            )}
+          </div>
+        )}
+
         <div className="flex items-center gap-6 text-zinc-500 text-xs mt-1 flex-wrap">
           <button
             onClick={handleLikeClick}

@@ -25,7 +25,13 @@ export interface User {
 export interface Post {
   id: string;
   authorId: string;
+  authorName?: string;
+  authorHandle?: string;
+  authorAvatar?: string;
   content: string;
+  monetized?: boolean;
+  mediaURL?: string;
+  mediaType?: string;
   timestamp: any; // Firestore Timestamp
   likesCount: number;
 }

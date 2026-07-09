@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { Send, Image, Smile, Coins } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Send, Image as ImageIcon, Smile, Coins, X, Loader, Video } from 'lucide-react';
+import { storage, isFirebaseConfigured } from '../firebaseClient';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 interface CreatePostProps {
-  onPublishPost: (content: string, monetized: boolean) => Promise<void>;
+  onPublishPost: (content: string, monetized: boolean, mediaURL?: string, mediaType?: 'image' | 'video') => Promise<void>;
   userAvatar: string;
 }
 
@@ -10,21 +12,50 @@ export default function CreatePost({ onPublishPost, userAvatar }: CreatePostProp
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [monetized, setMonetized] = useState(false);
-  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
+  const [uploadProgress, setUploadProgress] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const mediaInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim() || isSubmitting) return;
+    if ((!content.trim() && !mediaFile) || isSubmitting) return;
     setIsSubmitting(true);
+
     try {
-      await onPublishPost(content.trim(), monetized);
+      let mediaURL: string | undefined;
+      let finalMediaType: 'image' | 'video' | undefined;
+
+      if (mediaFile) {
+        setUploadProgress(true);
+        finalMediaType = mediaType;
+
+        if (isFirebaseConfigured) {
+          const ext = mediaFile.name.split('.').pop();
+          const path = `posts/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+          const sRef = storageRef(storage, path);
+          await uploadBytes(sRef, mediaFile, { contentType: mediaFile.type });
+          mediaURL = await getDownloadURL(sRef);
+        } else {
+          // Offline: use object URL (won't persist across sessions but works for demo)
+          mediaURL = URL.createObjectURL(mediaFile);
+        }
+        setUploadProgress(false);
+      }
+
+      await onPublishPost(content.trim(), monetized, mediaURL, finalMediaType);
       setContent('');
       setMonetized(false);
+      setMediaFile(null);
+      setMediaPreview(null);
       if (textareaRef.current) textareaRef.current.style.height = 'auto';
     } catch (error) {
       console.error('Error publishing post:', error);
     } finally {
       setIsSubmitting(false);
+      setUploadProgress(false);
     }
   };
 
@@ -34,6 +65,37 @@ export default function CreatePost({ onPublishPost, userAvatar }: CreatePostProp
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
+  };
+
+  const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const isVideo = file.type.startsWith('video/');
+    const isImage = file.type.startsWith('image/');
+
+    if (!isVideo && !isImage) {
+      return;
+    }
+
+    // Size limit: 50MB
+    if (file.size > 50 * 1024 * 1024) {
+      return;
+    }
+
+    setMediaType(isVideo ? 'video' : 'image');
+    setMediaFile(file);
+
+    const reader = new FileReader();
+    reader.onload = ev => setMediaPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+
+    e.target.value = '';
+  };
+
+  const removeMedia = () => {
+    setMediaFile(null);
+    setMediaPreview(null);
   };
 
   return (
@@ -56,40 +118,90 @@ export default function CreatePost({ onPublishPost, userAvatar }: CreatePostProp
             disabled={isSubmitting}
           />
 
+          {/* Media Preview */}
+          {mediaPreview && (
+            <div className="relative mt-2 rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950">
+              {mediaType === 'image' ? (
+                <img
+                  src={mediaPreview}
+                  alt="Preview"
+                  className="w-full max-h-72 object-contain"
+                />
+              ) : (
+                <video
+                  src={mediaPreview}
+                  controls
+                  className="w-full max-h-72"
+                  preload="metadata"
+                />
+              )}
+              <button
+                type="button"
+                onClick={removeMedia}
+                className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 text-white hover:bg-black cursor-pointer transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+              <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/70 rounded-full px-2 py-0.5">
+                {mediaType === 'video' ? <Video className="w-3 h-3 text-white" /> : <ImageIcon className="w-3 h-3 text-white" />}
+                <span className="text-[10px] text-white font-bold">
+                  {(mediaFile!.size / (1024 * 1024)).toFixed(1)} MB
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Monetization Toggle */}
           <button
             type="button"
             onClick={() => setMonetized(!monetized)}
-            className={`self-start flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-black border transition-all duration-200 cursor-pointer mt-1 mb-2 ${
+            className={`self-start flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-black border transition-all duration-200 cursor-pointer mt-2 mb-1 ${
               monetized
                 ? 'bg-amber-400/10 border-amber-400/40 text-amber-400'
                 : 'border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700'
             }`}
           >
-            <Coins className={`w-3.5 h-3.5 ${monetized ? 'text-amber-400' : ''}`} />
+            <Coins className={`w-3.5 h-3.5`} />
             <span>{monetized ? 'Gorjetas ativadas ✓' : 'Aceitar Gorjetas'}</span>
           </button>
 
           <div className="flex items-center justify-between border-t border-zinc-900 pt-3 mt-1">
-            <div className="flex items-center gap-4 text-zinc-500">
-              <button type="button" className="hover:text-white transition-colors duration-150 cursor-pointer">
-                <Image className="w-4 h-4" />
+            <div className="flex items-center gap-3 text-zinc-500">
+              {/* Media Upload Button */}
+              <button
+                type="button"
+                onClick={() => mediaInputRef.current?.click()}
+                title="Foto ou Vídeo"
+                className={`hover:text-white transition-colors duration-150 cursor-pointer p-1.5 rounded-full hover:bg-zinc-900 ${mediaFile ? 'text-sky-400' : ''}`}
+              >
+                <ImageIcon className="w-4 h-4" />
               </button>
-              <button type="button" className="hover:text-white transition-colors duration-150 cursor-pointer">
+              <input
+                ref={mediaInputRef}
+                type="file"
+                accept="image/*,video/*"
+                onChange={handleMediaSelect}
+                className="hidden"
+              />
+              <button type="button" className="hover:text-white transition-colors duration-150 cursor-pointer p-1.5 rounded-full hover:bg-zinc-900">
                 <Smile className="w-4 h-4" />
               </button>
               {content.length > 0 && (
-                <span className={`text-[10px] font-bold tabular-nums ${content.length > 250 ? 'text-amber-400' : 'text-zinc-600'}`}>
+                <span className={`text-[10px] font-bold tabular-nums ml-1 ${content.length > 250 ? 'text-amber-400' : 'text-zinc-600'}`}>
                   {280 - content.length}
                 </span>
               )}
             </div>
             <button
               type="submit"
-              disabled={!content.trim() || isSubmitting}
+              disabled={(!content.trim() && !mediaFile) || isSubmitting}
               className="px-5 py-2 rounded-full bg-white text-black font-extrabold text-sm hover:bg-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
             >
-              <span>{isSubmitting ? 'Postando...' : 'Postar'}</span>
-              <Send className="w-3 h-3" />
+              {isSubmitting ? (
+                uploadProgress ? <><Loader className="w-3 h-3 animate-spin" />Enviando...</> : <><Loader className="w-3 h-3 animate-spin" />Postando...</>
+              ) : (
+                <><Send className="w-3 h-3" />Postar</>
+              )}
             </button>
           </div>
         </form>

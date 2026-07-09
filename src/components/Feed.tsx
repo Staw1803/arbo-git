@@ -142,11 +142,12 @@ export default function Feed({ currentUser, setToast, onSeedReady }: FeedProps) 
     return () => unsub();
   }, [selectedPost]);
 
-  const handlePublishPost = async (content: string, monetized: boolean) => {
+  const handlePublishPost = async (content: string, monetized: boolean, mediaURL?: string, mediaType?: string) => {
     if (!currentUser) { setToast({ message: 'Faça login para postar.', type: 'error' }); return; }
     if (!isFirebaseConfigured) {
       setPosts([{ id: `mock-${Date.now()}`, authorId: currentUser.id, authorName: currentUser.displayName,
         authorHandle: currentUser.username, authorAvatar: currentUser.photoURL, content, monetized,
+        mediaURL, mediaType,
         timestamp: { toDate: () => new Date() }, likesCount: 0 }, ...posts]);
       setToast({ message: 'Post publicado (Simulado)!', type: 'success' }); return;
     }
@@ -154,7 +155,9 @@ export default function Feed({ currentUser, setToast, onSeedReady }: FeedProps) 
       await addDoc(collection(db, 'posts'), {
         authorId: currentUser.id, authorName: currentUser.displayName,
         authorHandle: currentUser.username, authorAvatar: currentUser.photoURL,
-        content, monetized: monetized || false, timestamp: serverTimestamp(), likesCount: 0
+        content, monetized: monetized || false,
+        ...(mediaURL ? { mediaURL, mediaType: mediaType || 'image' } : {}),
+        timestamp: serverTimestamp(), likesCount: 0
       });
       setToast({ message: 'Post publicado!', type: 'success' });
     } catch (err: any) { setToast({ message: `Erro: ${err.message}`, type: 'error' }); }

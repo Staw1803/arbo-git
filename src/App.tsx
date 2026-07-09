@@ -5,6 +5,7 @@ import RightSidebar from './components/RightSidebar';
 import Toast from './components/Toast';
 import Auth from './components/Auth';
 import WalletTab from './components/WalletTab';
+import ProfilePage from './components/ProfilePage';
 
 import { auth, db, isFirebaseConfigured } from './firebaseClient';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -16,8 +17,6 @@ import {
 } from 'firebase/firestore';
 import { 
   LogOut, 
-  Edit2,
-  Calendar,
   QrCode,
   Copy,
   Check,
@@ -47,12 +46,7 @@ function App() {
     if (seedFnRef.current) await seedFnRef.current();
   };
 
-  // Profile Edit States
-  const [isEditingProfile, setIsEditingProfile] = useState<boolean>(false);
-  const [editDisplayName, setEditDisplayName] = useState<string>('');
-  const [editUsername, setEditUsername] = useState<string>('');
-  const [editBio, setEditBio] = useState<string>('');
-  const [editAvatarUrl, setEditAvatarUrl] = useState<string>('');
+
 
   // 1. Firebase Auth Listener
   useEffect(() => {
@@ -80,7 +74,7 @@ function App() {
       if (docSnap.exists()) {
         const data = docSnap.data();
         
-        // Se o campo credits não existir no banco, inicializa com 0
+        // Se o campo credits nÃ£o existir no banco, inicializa com 0
         if (data.credits === undefined) {
           await updateDoc(docRef, { credits: 0 });
           data.credits = 0;
@@ -89,11 +83,6 @@ function App() {
         setProfile(data);
         setBalance(data.credits);
         
-        // Populate inputs for Profile Editing
-        setEditDisplayName(data.displayName || '');
-        setEditUsername(data.username || '');
-        setEditBio(data.bio || '');
-        setEditAvatarUrl(data.photoURL || '');
       } else {
         // Auto-create missing user in database to heal old or partial session states
         const usernameVal = session?.email?.split('@')[0] || 'user';
@@ -134,81 +123,6 @@ function App() {
     }
   }, [isOfflineSandbox]);
 
-  // 10. Profile Image local uploader with canvas compression helper
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      setToast({ message: 'Por favor, selecione um arquivo de imagem válido.', type: 'error' });
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const max_size = 120;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > max_size) {
-            height *= max_size / width;
-            width = max_size;
-          }
-        } else {
-          if (height > max_size) {
-            width *= max_size / height;
-            width = max_size;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
-        
-        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
-        setEditAvatarUrl(compressedBase64);
-      };
-    };
-    reader.readAsDataURL(file);
-  };
-
-  // 11. Profile Update handler
-  const handleSaveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!session?.uid) return;
-    
-    try {
-      const userRef = doc(db, 'users', session.uid);
-      const cleanUsername = editUsername.replace(/[@\s]+/g, '').toLowerCase();
-      const finalUsername = `@${cleanUsername}`;
-      
-      await updateDoc(userRef, {
-        displayName: editDisplayName,
-        username: finalUsername,
-        photoURL: editAvatarUrl,
-        bio: editBio
-      });
-      
-      setProfile((prev: any) => ({
-        ...prev,
-        displayName: editDisplayName,
-        username: finalUsername,
-        photoURL: editAvatarUrl,
-        bio: editBio
-      }));
-      
-      setIsEditingProfile(false);
-      setToast({ message: 'Perfil atualizado com sucesso!', type: 'success' });
-    } catch (err: any) {
-      setToast({ message: `Erro ao salvar perfil: ${err.message}`, type: 'error' });
-    }
-  };
 
   // 12. Logout Handler
   const handleLogout = async () => {
@@ -226,7 +140,7 @@ function App() {
     }
   };
 
-  // 13. Store / Checkout Handlers (Efí Bank Pix)
+  // 13. Store / Checkout Handlers (EfÃ­ Bank Pix)
   const handleSelectStorePackage = async (pkg: { name: string; coins: number; price: number }) => {
     setLoadingPix(true);
     setCheckoutPackage(null);
@@ -255,14 +169,14 @@ function App() {
           txid: data.txid
         });
         setTimeLeft(900); // Reset countdown to 15 mins
-        setToast({ message: 'PIX gerado via Efí Bank!', type: 'success' });
+        setToast({ message: 'PIX gerado via EfÃ­ Bank!', type: 'success' });
       } else {
-        throw new Error(data.error || 'Falha ao processar pagamento com a Efí');
+        throw new Error(data.error || 'Falha ao processar pagamento com a EfÃ­');
       }
     } catch (err: any) {
       console.error('Checkout network/API error:', err);
       setToast({ 
-        message: `Erro no Checkout: ${err.message || 'Falha de conexão com a Efí.'}`, 
+        message: `Erro no Checkout: ${err.message || 'Falha de conexÃ£o com a EfÃ­.'}`, 
         type: 'error' 
       });
     } finally {
@@ -297,7 +211,7 @@ function App() {
       });
     }, 1000);
 
-    // B. Polling Interval (checks payment status in Efí every 5 seconds)
+    // B. Polling Interval (checks payment status in EfÃ­ every 5 seconds)
     const pollInterval = setInterval(async () => {
       try {
         const response = await fetch(`/api/check-payment?txid=${checkoutPackage.txid}`);
@@ -320,7 +234,7 @@ function App() {
             
             setBalance(finalBalance);
             setToast({
-              message: `Pagamento Pix confirmado! (🪙 +${addedCoins.toLocaleString()} liberado).`,
+              message: `Pagamento Pix confirmado! (ðŸª™ +${addedCoins.toLocaleString()} liberado).`,
               type: 'success',
             });
             setCheckoutPackage(null);
@@ -338,7 +252,7 @@ function App() {
   }, [checkoutPackage, balance, session, isOfflineSandbox]);
 
   // Active User Identifiers
-  const activeName = profile?.displayName || (session ? session.displayName || session.email.split('@')[0] : 'Usuário');
+  const activeName = profile?.displayName || (session ? session.displayName || session.email.split('@')[0] : 'UsuÃ¡rio');
   const activeHandle = profile?.username ? (profile.username.startsWith('@') ? profile.username : `@${profile.username}`) : (session ? `@${session.email.split('@')[0]}` : '@usuario');
   const activeAvatar = profile?.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80';
 
@@ -403,7 +317,7 @@ function App() {
                 
                 <div className="flex flex-col gap-1.5">
                   <p className="text-sm text-zinc-400">
-                    Compre pacotes de moedas virtuais via PIX para destacar suas postagens e interações no Predix.
+                    Compre pacotes de moedas virtuais via PIX para destacar suas postagens e interaÃ§Ãµes no Predix.
                   </p>
                 </div>
 
@@ -411,7 +325,7 @@ function App() {
                   /* Loading Spinner */
                   <div className="flex flex-col items-center justify-center py-20 gap-3">
                     <RefreshCw className="w-8 h-8 text-sky-400 animate-spin" />
-                    <span className="text-xs font-bold text-zinc-400">Gerando cobrança PIX na Efí Bank...</span>
+                    <span className="text-xs font-bold text-zinc-400">Gerando cobranÃ§a PIX na EfÃ­ Bank...</span>
                   </div>
                 ) : !checkoutPackage ? (
                   /* Packages Grid */
@@ -420,7 +334,7 @@ function App() {
                     {/* Mini - R$5 */}
                     <div className="border border-zinc-800 rounded-3xl p-5 flex flex-col justify-between gap-6 bg-transparent hover:border-zinc-700 transition-all duration-150 text-center">
                       <div className="flex flex-col gap-1">
-                        <span className="text-2xl font-black text-white">🪙 50</span>
+                        <span className="text-2xl font-black text-white">ðŸª™ 50</span>
                         <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Pacote Mini</span>
                         <p className="text-zinc-500 text-xs mt-2 leading-relaxed">Perfeito para testar e dar primeiras gorjetas.</p>
                       </div>
@@ -438,9 +352,9 @@ function App() {
                     {/* Starter - R$10 */}
                     <div className="border border-zinc-800 rounded-3xl p-5 flex flex-col justify-between gap-6 bg-transparent hover:border-zinc-700 transition-all duration-150 text-center">
                       <div className="flex flex-col gap-1">
-                        <span className="text-2xl font-black text-white">🪙 100</span>
+                        <span className="text-2xl font-black text-white">ðŸª™ 100</span>
                         <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Pacote Starter</span>
-                        <p className="text-zinc-500 text-xs mt-2 leading-relaxed">Ideal para começar e fazer posts simples.</p>
+                        <p className="text-zinc-500 text-xs mt-2 leading-relaxed">Ideal para comeÃ§ar e fazer posts simples.</p>
                       </div>
                       <div className="flex flex-col gap-2">
                         <div className="text-lg font-black text-white">R$ 10,00</div>
@@ -457,9 +371,9 @@ function App() {
                     <div className="border border-sky-500/20 rounded-3xl p-5 flex flex-col justify-between gap-6 bg-sky-950/5 hover:border-sky-500/40 transition-all duration-150 text-center relative">
                       <div className="absolute top-3 right-3 bg-sky-500 text-black text-[8.5px] font-black uppercase px-2 py-0.5 rounded-full">Popular</div>
                       <div className="flex flex-col gap-1">
-                        <span className="text-2xl font-black text-white">🪙 500</span>
+                        <span className="text-2xl font-black text-white">ðŸª™ 500</span>
                         <span className="text-[10px] text-zinc-550 font-bold uppercase tracking-wider">Pacote Pro</span>
-                        <p className="text-zinc-500 text-xs mt-2 leading-relaxed">Perfeito para usuários ativos no feed.</p>
+                        <p className="text-zinc-500 text-xs mt-2 leading-relaxed">Perfeito para usuÃ¡rios ativos no feed.</p>
                       </div>
                       <div className="flex flex-col gap-2">
                         <div className="text-lg font-black text-white">R$ 45,00</div>
@@ -475,9 +389,9 @@ function App() {
                     {/* Whale */}
                     <div className="border border-zinc-800 rounded-3xl p-5 flex flex-col justify-between gap-6 bg-transparent hover:border-zinc-700 transition-all duration-150 text-center">
                       <div className="flex flex-col gap-1">
-                        <span className="text-2xl font-black text-white">🪙 1000</span>
+                        <span className="text-2xl font-black text-white">ðŸª™ 1000</span>
                         <span className="text-[10px] text-zinc-550 font-bold uppercase tracking-wider">Pacote Whale</span>
-                        <p className="text-zinc-500 text-xs mt-2 leading-relaxed">Para quem quer apoiar ao máximo a nossa rede.</p>
+                        <p className="text-zinc-500 text-xs mt-2 leading-relaxed">Para quem quer apoiar ao mÃ¡ximo a nossa rede.</p>
                       </div>
                       <div className="flex flex-col gap-2">
                         <div className="text-lg font-black text-white">R$ 80,00</div>
@@ -510,7 +424,7 @@ function App() {
                     <div className="flex justify-between items-center bg-zinc-950 p-4 rounded-2xl border border-zinc-850">
                       <div>
                         <span className="text-[10px] font-bold text-zinc-550 uppercase tracking-wider block">Pacote Selecionado</span>
-                        <span className="text-sm font-black text-white">🪙 {checkoutPackage.coins} ({checkoutPackage.name})</span>
+                        <span className="text-sm font-black text-white">ðŸª™ {checkoutPackage.coins} ({checkoutPackage.name})</span>
                       </div>
                       <div className="text-right">
                         <span className="text-[10px] font-bold text-zinc-555 uppercase tracking-wider block">Total a pagar</span>
@@ -548,7 +462,7 @@ function App() {
                     <div className="flex flex-col items-center justify-center py-2.5 gap-2.5 border-t border-zinc-900 pt-5 mt-2">
                       <div className="flex items-center gap-2 text-sky-400 font-bold text-xs">
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        <span>Aguardando pagamento automático...</span>
+                        <span>Aguardando pagamento automÃ¡tico...</span>
                       </div>
                       
                       <div className="text-center text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
@@ -564,146 +478,30 @@ function App() {
             </div>
           )}
 
-          {/* Profile Tab with editing form */}
+          {/* Profile Tab */}
           {activeTab === 'profile' && (
-            <div className="flex-1 min-h-screen border-r border-zinc-800 bg-black min-w-0">
-              <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-md border-b border-zinc-800 px-4 py-4 flex items-center justify-between">
-                <h2 className="text-lg font-bold text-white text-left">Perfil</h2>
-                
+            <div className="flex-1 min-h-screen border-r border-zinc-800 bg-black min-w-0 flex flex-col">
+              {/* Logout header */}
+              <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-md border-b border-zinc-800 px-6 py-4 flex items-center justify-between shrink-0">
+                <h2 className="text-lg font-black tracking-tight text-white">Perfil</h2>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-800 text-xs font-bold text-zinc-400 hover:text-white hover:border-zinc-700 transition-all duration-150 cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-zinc-800 text-xs font-bold text-zinc-400 hover:text-white hover:border-zinc-700 transition-all cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>Sair</span>
                 </button>
               </div>
-              <div className="p-4 flex flex-col gap-6 text-left animate-fade-in font-medium">
-                {/* Profile Header Card */}
-                <div className="p-5 rounded-2xl bg-transparent border border-zinc-800 flex flex-col gap-4">
-                  
-                  {!isEditingProfile ? (
-                    <>
-                      {/* Avatar & Edit Profile Action Row */}
-                      <div className="flex justify-between items-start gap-4">
-                        <img
-                          src={activeAvatar}
-                          alt="Avatar"
-                          className="w-16 h-16 rounded-full object-cover border border-zinc-800 shrink-0"
-                        />
-                        <button
-                          onClick={() => setIsEditingProfile(true)}
-                          className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-zinc-800 text-xs font-black text-white hover:bg-zinc-900 transition-all duration-150 cursor-pointer shrink-0"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                          <span>Editar Perfil</span>
-                        </button>
-                      </div>
-
-                      {/* Display & Handle Info */}
-                      <div className="flex flex-col text-left mt-1">
-                        <h3 className="text-xl font-black text-white leading-none">{activeName}</h3>
-                        <span className="text-zinc-500 text-xs font-mono mt-1">{activeHandle}</span>
-                      </div>
-
-                      {/* Bio */}
-                      <div className="border-t border-zinc-900 pt-3.5">
-                        <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1">Biografia</p>
-                        <p className="text-zinc-300 text-sm leading-relaxed">
-                          {profile?.bio || 'Nenhuma biografia informada.'}
-                        </p>
-                      </div>
-                    </>
-                  ) : (
-                    /* Inline Edit Profile Form */
-                    <form onSubmit={handleSaveProfile} className="flex flex-col gap-4 text-left animate-scale-up">
-                      <div className="flex justify-between items-center border-b border-zinc-900 pb-2">
-                        <h4 className="text-sm font-black text-white uppercase tracking-wider">Informações do Perfil</h4>
-                        <button
-                          type="button"
-                          onClick={() => setIsEditingProfile(false)}
-                          className="text-zinc-500 hover:text-white text-xs cursor-pointer hover:underline"
-                        >
-                          Cancelar
-                        </button>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] font-bold text-zinc-500 uppercase">Nome de Exibição</label>
-                          <input
-                            type="text"
-                            value={editDisplayName}
-                            onChange={(e) => setEditDisplayName(e.target.value)}
-                            className="bg-black border border-zinc-800 focus:border-sky-500 rounded-xl px-3 py-2 text-xs text-white focus:outline-none font-bold"
-                            placeholder="Nome de Exibição"
-                            required
-                          />
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] font-bold text-zinc-500 uppercase">Handle/Username</label>
-                          <input
-                            type="text"
-                            value={editUsername}
-                            onChange={(e) => setEditUsername(e.target.value)}
-                            className="bg-black border border-zinc-800 focus:border-sky-500 rounded-xl px-3 py-2 text-xs text-white focus:outline-none font-bold"
-                            placeholder="username"
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      {/* Local File Upload Picker */}
-                      <div className="flex flex-col gap-2">
-                        <label className="text-[10px] font-bold text-zinc-500 uppercase">Foto de Perfil (Upload Local)</label>
-                        <div className="flex items-center gap-4">
-                          <img
-                            src={editAvatarUrl || activeAvatar}
-                            alt="Pre-visualização"
-                            className="w-12 h-12 rounded-full object-cover border border-zinc-800 shrink-0"
-                          />
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="text-xs text-zinc-555 file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border file:border-zinc-800 file:text-[10px] file:font-black file:bg-zinc-950 file:text-white hover:file:bg-zinc-900 file:cursor-pointer"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold text-zinc-500 uppercase">Biografia</label>
-                        <textarea
-                          value={editBio}
-                          onChange={(e) => setEditBio(e.target.value)}
-                          className="bg-black border border-zinc-800 focus:border-sky-500 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none font-bold min-h-[80px]"
-                          placeholder="Escreva algo sobre você..."
-                        />
-                      </div>
-
-                      <button
-                        type="submit"
-                        className="px-4 py-2.5 mt-2 rounded-full bg-white text-black font-extrabold text-xs cursor-pointer hover:bg-zinc-200 transition-all text-center"
-                      >
-                        Salvar Alterações
-                      </button>
-                    </form>
-                  )}
-                </div>
-
-                {/* Minhas Publicações placeholder */}
-                <div className="flex flex-col gap-4 mt-2">
-                  <h3 className="text-xs font-black text-zinc-555 uppercase tracking-widest border-b border-zinc-900 pb-2 flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-zinc-550" />
-                    <span>Publicações</span>
-                  </h3>
-                  <p className="text-zinc-500 text-xs text-center py-10 font-bold">
-                    Seu perfil social está configurado e ativo. Suas novas postagens aparecerão no feed geral em tempo real!
-                  </p>
-                </div>
-
-              </div>
+              <ProfilePage
+                session={session}
+                profile={profile}
+                balance={balance}
+                setToast={setToast}
+                onProfileUpdate={(updated) => {
+                  setProfile(updated);
+                  if (updated.credits !== undefined) setBalance(updated.credits);
+                }}
+              />
             </div>
           )}
 
