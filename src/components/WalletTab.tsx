@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { Wallet, ArrowDownCircle, Coins, RefreshCw, Check } from 'lucide-react';
 import { db, isFirebaseConfigured } from '../firebaseClient';
 import { collection, addDoc, doc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
-
-const COINS_PER_BRL = 10; // 10 moedas = R$ 1,00
+import { MOEDA_VALOR_REAL } from '../constants';
 
 interface WalletTabProps {
   balance: number;
@@ -18,20 +17,20 @@ export default function WalletTab({ balance, userId, setToast, onBalanceUpdate }
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const brlValue = (balance / COINS_PER_BRL).toFixed(2);
-  const withdrawBRL = (Number(withdrawCoins) / COINS_PER_BRL).toFixed(2);
+  const brlValue = (balance * MOEDA_VALOR_REAL).toFixed(2);
+  const withdrawBRL = (Number(withdrawCoins) * MOEDA_VALOR_REAL).toFixed(2);
 
   const handleWithdraw = async (e: React.FormEvent) => {
     e.preventDefault();
     const coins = Number(withdrawCoins);
     if (!coins || coins <= 0) { setToast({ message: 'Informe um valor válido de moedas.', type: 'error' }); return; }
     if (coins > balance) { setToast({ message: 'Saldo insuficiente.', type: 'error' }); return; }
-    if (coins < COINS_PER_BRL) { setToast({ message: `Mínimo de ${COINS_PER_BRL} moedas (R$ 1,00) para saque.`, type: 'error' }); return; }
+    if (coins < 100) { setToast({ message: `Mínimo de 100 moedas (R$ 10,00) para saque.`, type: 'error' }); return; }
     if (!pixKey.trim()) { setToast({ message: 'Informe sua chave PIX.', type: 'error' }); return; }
 
     setLoading(true);
     try {
-      const brl = Number((coins / COINS_PER_BRL).toFixed(2));
+      const brl = Number((coins * MOEDA_VALOR_REAL).toFixed(2));
       if (isFirebaseConfigured && userId) {
         await updateDoc(doc(db, 'users', userId), { credits: increment(-coins) });
         await addDoc(collection(db, 'withdrawals'), {
@@ -74,7 +73,7 @@ export default function WalletTab({ balance, userId, setToast, onBalanceUpdate }
             <span className="text-xs text-zinc-400 font-bold">
               Equivalente a{' '}
               <span className="text-white font-black">R$ {brlValue}</span>
-              {' '}(taxa: {COINS_PER_BRL} moedas = R$ 1,00)
+              {' '}(taxa: 1 moeda = R$ {MOEDA_VALOR_REAL.toFixed(2).replace('.', ',')})
             </span>
           </div>
         </div>
@@ -104,12 +103,12 @@ export default function WalletTab({ balance, userId, setToast, onBalanceUpdate }
               <div className="flex gap-3 items-center">
                 <input
                   type="number"
-                  min={COINS_PER_BRL}
+                  min={100}
                   max={balance}
-                  step={COINS_PER_BRL}
+                  step={10}
                   value={withdrawCoins}
                   onChange={(e) => setWithdrawCoins(e.target.value)}
-                  placeholder={`Mín. ${COINS_PER_BRL} moedas`}
+                  placeholder={`Mín. 100 moedas`}
                   className="flex-1 bg-black border border-zinc-800 focus:border-sky-500 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none font-medium"
                   required
                 />
@@ -145,7 +144,7 @@ export default function WalletTab({ balance, userId, setToast, onBalanceUpdate }
 
           <div className="bg-zinc-950 border border-zinc-900 rounded-2xl p-3 text-xs text-zinc-500 font-medium leading-relaxed">
             ℹ️ Saques são processados manualmente em até <strong className="text-zinc-300">3 dias úteis</strong>.
-            O valor mínimo é de <strong className="text-zinc-300">R$ 1,00 ({COINS_PER_BRL} moedas)</strong>.
+            O valor mínimo é de <strong className="text-zinc-300">R$ 10,00 (100 moedas)</strong>.
           </div>
         </div>
       </div>

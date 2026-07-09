@@ -7,8 +7,7 @@ import {
 import { Edit2, Camera, Check, X, Loader, Calendar } from 'lucide-react';
 import AvatarCropModal from './AvatarCropModal';
 import PostCard from './PostCard';
-
-const COINS_PER_BRL = 10;
+import { MOEDA_VALOR_REAL } from '../constants';
 
 interface ProfilePageProps {
   session: any;
@@ -166,7 +165,7 @@ export default function ProfilePage({ session, profile, balance, setToast, onPro
     try { await updateDoc(doc(db, 'posts', postId), { likesCount: increment(1) }); } catch (e) { console.error(e); }
   };
 
-  const brlValue = (balance / COINS_PER_BRL).toFixed(2);
+  const brlValue = (balance * MOEDA_VALOR_REAL).toFixed(2);
 
   return (
     <div className="flex-1 min-h-screen border-r border-zinc-800 bg-black min-w-0">

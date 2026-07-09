@@ -10,7 +10,7 @@ import PostCard from './PostCard';
 import type { Post, Comment, User } from '../types';
 import { X, Send, MessageCircle } from 'lucide-react';
 
-const TIP_AMOUNT = 5;
+import { GORJETA_MOEDAS } from '../constants';
 
 interface FeedProps {
   currentUser: User | null;
@@ -72,7 +72,9 @@ export default function Feed({ currentUser, setToast, onSeedReady }: FeedProps) 
         const ref = doc(collection(db, 'users'));
         batch1.set(ref, {
           displayName: user.displayName, username: user.username, photoURL: user.photoURL,
-          credits: Math.floor(Math.random() * 200), bio: 'Usuário do Predix Social 🚀', createdAt: serverTimestamp()
+          credits: Math.floor(Math.random() * 500) * 10, bio: 'Usuário do Predix Social 🚀', 
+          followersCount: Math.floor(Math.random() * 1500), followingCount: Math.floor(Math.random() * 800),
+          createdAt: serverTimestamp()
         });
         ids.push(ref.id);
       }
@@ -84,8 +86,8 @@ export default function Feed({ currentUser, setToast, onSeedReady }: FeedProps) 
         batch2.set(ref, {
           authorId: ids[ui] || 'seed', authorName: FAKE_USERS[ui].displayName,
           authorHandle: `@${FAKE_USERS[ui].username}`, authorAvatar: FAKE_USERS[ui].photoURL,
-          content: FAKE_POSTS[i], monetized: i % 3 === 0,
-          timestamp: serverTimestamp(), likesCount: Math.floor(Math.random() * 80)
+          content: FAKE_POSTS[i], monetized: Math.random() > 0.4, // 60% of posts monetized
+          timestamp: serverTimestamp(), likesCount: Math.floor(Math.random() * 120)
         });
       }
       await batch2.commit();
@@ -171,16 +173,16 @@ export default function Feed({ currentUser, setToast, onSeedReady }: FeedProps) 
 
   const handleTip = async (_postId: string, authorId: string) => {
     if (!currentUser) { setToast({ message: 'Faça login para dar gorjeta.', type: 'error' }); return; }
-    if ((currentUser.credits || 0) < TIP_AMOUNT) {
-      setToast({ message: `Saldo insuficiente! Precisa de ${TIP_AMOUNT} 🪙.`, type: 'error' }); return;
+    if ((currentUser.credits || 0) < GORJETA_MOEDAS) {
+      setToast({ message: `Saldo insuficiente! Precisa de ${GORJETA_MOEDAS} 🪙.`, type: 'error' }); return;
     }
-    if (!isFirebaseConfigured) { setToast({ message: `Gorjeta de ${TIP_AMOUNT} 🪙 enviada!`, type: 'success' }); return; }
+    if (!isFirebaseConfigured) { setToast({ message: `Gorjeta de ${GORJETA_MOEDAS} 🪙 enviada!`, type: 'success' }); return; }
     try {
       const batch = writeBatch(db);
-      batch.update(doc(db, 'users', currentUser.id), { credits: increment(-TIP_AMOUNT) });
-      batch.update(doc(db, 'users', authorId), { credits: increment(TIP_AMOUNT) });
+      batch.update(doc(db, 'users', currentUser.id), { credits: increment(-GORJETA_MOEDAS) });
+      batch.update(doc(db, 'users', authorId), { credits: increment(GORJETA_MOEDAS) });
       await batch.commit();
-      setToast({ message: `Gorjeta de ${TIP_AMOUNT} 🪙 enviada!`, type: 'success' });
+      setToast({ message: `Gorjeta de ${GORJETA_MOEDAS} 🪙 enviada!`, type: 'success' });
     } catch (err: any) { setToast({ message: `Erro: ${err.message}`, type: 'error' }); }
   };
 

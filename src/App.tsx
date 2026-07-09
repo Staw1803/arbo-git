@@ -8,6 +8,7 @@ import WalletTab from './components/WalletTab';
 import ProfilePage from './components/ProfilePage';
 
 import { auth, db, isFirebaseConfigured } from './firebaseClient';
+import { MOEDA_VALOR_REAL } from './constants';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { 
   doc, 
@@ -140,7 +141,7 @@ function App() {
     }
   };
 
-  // 13. Store / Checkout Handlers (EfÃ­ Bank Pix)
+  // 13. Store / Checkout Handlers (Efí Bank Pix)
   const handleSelectStorePackage = async (pkg: { name: string; coins: number; price: number }) => {
     setLoadingPix(true);
     setCheckoutPackage(null);
@@ -169,14 +170,14 @@ function App() {
           txid: data.txid
         });
         setTimeLeft(900); // Reset countdown to 15 mins
-        setToast({ message: 'PIX gerado via EfÃ­ Bank!', type: 'success' });
+        setToast({ message: 'PIX gerado via Efí Bank!', type: 'success' });
       } else {
-        throw new Error(data.error || 'Falha ao processar pagamento com a EfÃ­');
+        throw new Error(data.error || 'Falha ao processar pagamento com a Efí');
       }
     } catch (err: any) {
       console.error('Checkout network/API error:', err);
       setToast({ 
-        message: `Erro no Checkout: ${err.message || 'Falha de conexÃ£o com a EfÃ­.'}`, 
+        message: `Erro no Checkout: ${err.message || 'Falha de conexão com a Efí.'}`, 
         type: 'error' 
       });
     } finally {
@@ -221,7 +222,8 @@ function App() {
             clearInterval(timerInterval);
             clearInterval(pollInterval);
             
-            const addedCoins = checkoutPackage.coins;
+            // Calculate coins based on fixed conversion rate
+            const addedCoins = Math.floor(checkoutPackage.price / MOEDA_VALOR_REAL);
             const finalBalance = balance + addedCoins;
 
             if (!isOfflineSandbox && session?.uid) {
@@ -234,7 +236,7 @@ function App() {
             
             setBalance(finalBalance);
             setToast({
-              message: `Pagamento Pix confirmado! (ðŸª™ +${addedCoins.toLocaleString()} liberado).`,
+              message: `Pagamento Pix confirmado! (🪙 +${addedCoins.toLocaleString()} liberado).`,
               type: 'success',
             });
             setCheckoutPackage(null);
@@ -334,12 +336,12 @@ function App() {
                     {/* Mini - R$5 */}
                     <div className="border border-zinc-800 rounded-3xl p-5 flex flex-col justify-between gap-6 bg-transparent hover:border-zinc-700 transition-all duration-150 text-center">
                       <div className="flex flex-col gap-1">
-                        <span className="text-2xl font-black text-white">ðŸª™ 50</span>
-                        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Pacote Mini</span>
-                        <p className="text-zinc-500 text-xs mt-2 leading-relaxed">Perfeito para testar e dar primeiras gorjetas.</p>
+                        <h3 className="text-xl font-black text-white text-center tracking-tight flex items-center justify-center gap-1.5"><span className="text-amber-400">🪙</span> 50</h3>
+                        <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest text-center mt-1">Pacote Mini</p>
+                        <p className="text-xs text-zinc-400 text-center mt-4 mb-6 leading-relaxed font-semibold px-2">Perfeito para testar e dar primeiras gorjetas.</p>
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <div className="text-lg font-black text-white">R$ 5,00</div>
+                      <div className="mt-auto flex flex-col gap-3">
+                        <span className="text-xl font-black text-white text-center">R$ 5,00</span>
                         <button
                           onClick={() => handleSelectStorePackage({ name: 'Mini', coins: 50, price: 5 })}
                           className="w-full py-2.5 rounded-full bg-white text-black font-extrabold text-xs cursor-pointer hover:bg-zinc-200 transition-all duration-150"
@@ -352,12 +354,12 @@ function App() {
                     {/* Starter - R$10 */}
                     <div className="border border-zinc-800 rounded-3xl p-5 flex flex-col justify-between gap-6 bg-transparent hover:border-zinc-700 transition-all duration-150 text-center">
                       <div className="flex flex-col gap-1">
-                        <span className="text-2xl font-black text-white">ðŸª™ 100</span>
-                        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Pacote Starter</span>
-                        <p className="text-zinc-500 text-xs mt-2 leading-relaxed">Ideal para comeÃ§ar e fazer posts simples.</p>
+                        <h3 className="text-xl font-black text-white text-center tracking-tight flex items-center justify-center gap-1.5"><span className="text-amber-400">🪙</span> 100</h3>
+                        <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest text-center mt-1">Pacote Starter</p>
+                        <p className="text-xs text-zinc-400 text-center mt-4 mb-6 leading-relaxed font-semibold px-2">Ideal para começar e fazer posts simples.</p>
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <div className="text-lg font-black text-white">R$ 10,00</div>
+                      <div className="mt-auto flex flex-col gap-3">
+                        <span className="text-xl font-black text-white text-center">R$ 10,00</span>
                         <button
                           onClick={() => handleSelectStorePackage({ name: 'Starter', coins: 100, price: 10 })}
                           className="w-full py-2.5 rounded-full bg-white text-black font-extrabold text-xs cursor-pointer hover:bg-zinc-200 transition-all duration-150"
@@ -369,16 +371,18 @@ function App() {
 
                     {/* Pro */}
                     <div className="border border-sky-500/20 rounded-3xl p-5 flex flex-col justify-between gap-6 bg-sky-950/5 hover:border-sky-500/40 transition-all duration-150 text-center relative">
-                      <div className="absolute top-3 right-3 bg-sky-500 text-black text-[8.5px] font-black uppercase px-2 py-0.5 rounded-full">Popular</div>
-                      <div className="flex flex-col gap-1">
-                        <span className="text-2xl font-black text-white">ðŸª™ 500</span>
-                        <span className="text-[10px] text-zinc-550 font-bold uppercase tracking-wider">Pacote Pro</span>
-                        <p className="text-zinc-500 text-xs mt-2 leading-relaxed">Perfeito para usuÃ¡rios ativos no feed.</p>
+                      <div className="absolute top-3 right-3 bg-sky-500 rounded-full px-2 py-0.5">
+                        <span className="text-[9px] font-black uppercase tracking-wider text-black">Popular</span>
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <div className="text-lg font-black text-white">R$ 45,00</div>
+                      <div className="flex flex-col gap-1">
+                        <h3 className="text-2xl font-black text-white text-center tracking-tight flex items-center justify-center gap-1.5"><span className="text-amber-400">🪙</span> 500</h3>
+                        <p className="text-[10px] font-black text-sky-400 uppercase tracking-widest text-center mt-1">Pacote Pro</p>
+                        <p className="text-xs text-zinc-400 text-center mt-4 mb-6 leading-relaxed font-semibold px-2">Perfeito para usuários ativos no feed.</p>
+                      </div>
+                      <div className="mt-auto flex flex-col gap-3">
+                        <span className="text-xl font-black text-white text-center">R$ 50,00</span>
                         <button
-                          onClick={() => handleSelectStorePackage({ name: 'Pro', coins: 500, price: 45 })}
+                          onClick={() => handleSelectStorePackage({ name: 'Pro', coins: 500, price: 50 })}
                           className="w-full py-2.5 rounded-full bg-white text-black font-extrabold text-xs cursor-pointer hover:bg-zinc-200 transition-all duration-150"
                         >
                           Comprar via PIX
@@ -389,14 +393,14 @@ function App() {
                     {/* Whale */}
                     <div className="border border-zinc-800 rounded-3xl p-5 flex flex-col justify-between gap-6 bg-transparent hover:border-zinc-700 transition-all duration-150 text-center">
                       <div className="flex flex-col gap-1">
-                        <span className="text-2xl font-black text-white">ðŸª™ 1000</span>
-                        <span className="text-[10px] text-zinc-550 font-bold uppercase tracking-wider">Pacote Whale</span>
-                        <p className="text-zinc-500 text-xs mt-2 leading-relaxed">Para quem quer apoiar ao mÃ¡ximo a nossa rede.</p>
+                        <h3 className="text-3xl font-black text-white text-center tracking-tight flex items-center justify-center gap-1.5"><span className="text-amber-400">🪙</span> 1000</h3>
+                        <p className="text-[10px] font-black text-white uppercase tracking-widest text-center mt-1">Pacote Whale</p>
+                        <p className="text-xs text-zinc-400 text-center mt-4 mb-6 leading-relaxed font-semibold px-2">Para quem quer apoiar ao máximo a nossa rede.</p>
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <div className="text-lg font-black text-white">R$ 80,00</div>
+                      <div className="mt-auto flex flex-col gap-3">
+                        <span className="text-xl font-black text-white text-center">R$ 100,00</span>
                         <button
-                          onClick={() => handleSelectStorePackage({ name: 'Whale', coins: 1000, price: 80 })}
+                          onClick={() => handleSelectStorePackage({ name: 'Whale', coins: 1000, price: 100 })}
                           className="w-full py-2.5 rounded-full bg-white text-black font-extrabold text-xs cursor-pointer hover:bg-zinc-200 transition-all duration-150"
                         >
                           Comprar via PIX

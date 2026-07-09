@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Heart, MessageCircle, Share2, MoreHorizontal, Coins, Sparkles } from 'lucide-react';
 import type { Post } from '../types';
 
-const TIP_AMOUNT = 5;
+import { GORJETA_MOEDAS } from '../constants';
 
 interface PostCardProps {
   post: Post & {
@@ -148,7 +148,7 @@ export default function PostCard({ post, onLike, onCommentClick, onTip, currentU
               }`}
             >
               <Coins className={`w-3.5 h-3.5 ${tipping ? 'animate-spin' : ''}`} />
-              <span>{tipped ? 'Gorjeta enviada!' : `Dar ${TIP_AMOUNT} 🪙`}</span>
+              <span>{isOwn ? 'Seu Post' : (tipped ? 'Enviada' : `Gorjeta (${GORJETA_MOEDAS})`)}</span>
             </button>
           )}
         </div>
